@@ -1,0 +1,46 @@
+{
+  "useCases": [
+    {
+      "id": "1765290749902",
+      "name": "UC-101",
+      "cohort": "UC-1X",
+      "color": "#9aa60e",
+      "description": ""
+    },
+    {
+      "id": "1765291136245",
+      "name": "UC-201",
+      "cohort": "UC-2X",
+      "color": "#2c1376",
+      "description": "test"
+    }
+  ],
+  "evaluationPeriods": [
+    {
+      "id": "1765291114082",
+      "cohort": "UC-1X",
+      "name": "Evaluation period",
+      "startDate": "2026-01-05",
+      "endDate": "2026-01-25"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1765291027518",
+      "useCaseId": "1765290749902",
+      "title": "Submit Phase 3 report",
+      "date": "2026-01-05",
+      "isMilestone": false,
+      "notes": ""
+    },
+    {
+      "id": "1765291079286",
+      "useCaseId": "1765290749902",
+      "title": "test",
+      "date": "2025-12-26",
+      "isMilestone": true,
+      "notes": ""
+    }
+  ],
+  "exportDate": "2025-12-09T14:50:33.479Z"
+}

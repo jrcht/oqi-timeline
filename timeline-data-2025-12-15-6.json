@@ -1,0 +1,536 @@
+{
+  "useCases": [
+    {
+      "id": "1765293294888",
+      "name": "UC-101",
+      "cohort": "UC-1XX",
+      "color": "#ad3e00",
+      "description": ""
+    },
+    {
+      "id": "1765293822420",
+      "name": "UC-201",
+      "cohort": "UC-2XX",
+      "color": "#4f7a28",
+      "description": ""
+    },
+    {
+      "id": "1765293855512",
+      "name": "UC-202",
+      "cohort": "UC-2XX",
+      "color": "#669c35",
+      "description": ""
+    },
+    {
+      "id": "1765293887777",
+      "name": "UC-104",
+      "cohort": "UC-1XX 2",
+      "color": "#e32400",
+      "description": ""
+    },
+    {
+      "id": "1765293912797",
+      "name": "UC-105",
+      "cohort": "UC-1XX 2",
+      "color": "#ff6251",
+      "description": ""
+    },
+    {
+      "id": "1765293934535",
+      "name": "UC-110",
+      "cohort": "UC-1XX 2",
+      "color": "#ff6251",
+      "description": ""
+    },
+    {
+      "id": "1765293960515",
+      "name": "UC-203",
+      "cohort": "UC-2XX",
+      "color": "#96d35f",
+      "description": ""
+    },
+    {
+      "id": "1765293977804",
+      "name": "UC-204",
+      "cohort": "UC-2XX",
+      "color": "#b1dd8c",
+      "description": ""
+    },
+    {
+      "id": "1765294026550",
+      "name": "UC-301",
+      "cohort": "UC-3XX",
+      "color": "#7b219f",
+      "description": ""
+    },
+    {
+      "id": "1765294365726",
+      "name": "Team",
+      "cohort": "OQI",
+      "color": "#008cb4",
+      "description": ""
+    }
+  ],
+  "evaluationPeriods": [
+    {
+      "id": "1765293382076",
+      "cohort": "UC-1XX",
+      "name": "Phase 3 Evaluation",
+      "startDate": "2026-01-06",
+      "endDate": "2026-01-25"
+    },
+    {
+      "id": "1765294877492",
+      "cohort": "UC-2XX",
+      "name": "P2 Evaluation",
+      "startDate": "2026-02-05",
+      "endDate": "2026-02-16"
+    },
+    {
+      "id": "1765295006784",
+      "cohort": "UC-2XX",
+      "name": "Call with P2 evaluators",
+      "startDate": "2026-02-23",
+      "endDate": "2026-02-27"
+    },
+    {
+      "id": "1765295158983",
+      "cohort": "UC-2XX",
+      "name": "Send P2 Evaluation Feedback",
+      "startDate": "2026-02-27",
+      "endDate": "2026-02-27"
+    },
+    {
+      "id": "1765295253773",
+      "cohort": "UC-1XX 2",
+      "name": "Review P3 draft reports",
+      "startDate": "2026-03-02",
+      "endDate": "2026-03-04"
+    },
+    {
+      "id": "1765295380677",
+      "cohort": "UC-1XX 2",
+      "name": "Submit P3 Report",
+      "startDate": "2026-04-10",
+      "endDate": "2026-04-10"
+    },
+    {
+      "id": "1765295463722",
+      "cohort": "UC-1XX 2",
+      "name": "Phase 3 Evaluation",
+      "startDate": "2026-04-13",
+      "endDate": "2026-04-26"
+    },
+    {
+      "id": "1765295528735",
+      "cohort": "UC-1XX 2",
+      "name": "Send P3 Evaluation Feedback",
+      "startDate": "2026-04-27",
+      "endDate": "2026-04-28"
+    },
+    {
+      "id": "1765295673141",
+      "cohort": "UC-3XX",
+      "name": "Phase 2 Evaluation",
+      "startDate": "2026-04-29",
+      "endDate": "2026-05-17"
+    },
+    {
+      "id": "1765786916795",
+      "cohort": "UC-1XX 2",
+      "name": "Review draft P4 reports",
+      "startDate": "2026-06-29",
+      "endDate": "2026-07-03"
+    },
+    {
+      "id": "1765786984302",
+      "cohort": "UC-2XX",
+      "name": "Prepare P3 reports evaluations",
+      "startDate": "2026-06-29",
+      "endDate": "2026-07-02"
+    },
+    {
+      "id": "1765787026758",
+      "cohort": "UC-3XX",
+      "name": "Prepare P3 reports evaluation",
+      "startDate": "2026-06-29",
+      "endDate": "2026-07-02"
+    },
+    {
+      "id": "1765787113060",
+      "cohort": "UC-1XX 2",
+      "name": "P4 Report Evaluation",
+      "startDate": "2026-07-29",
+      "endDate": "2026-08-16"
+    },
+    {
+      "id": "1765787159131",
+      "cohort": "UC-1XX 2",
+      "name": "Submit P4 Report",
+      "startDate": "2026-07-28",
+      "endDate": "2026-07-28"
+    },
+    {
+      "id": "1765787264043",
+      "cohort": "UC-1XX 2",
+      "name": "Send P4 Evaluation Feedback",
+      "startDate": "2026-08-17",
+      "endDate": "2026-08-18"
+    },
+    {
+      "id": "1765787327734",
+      "cohort": "UC-2XX",
+      "name": "Review P3 Draft report",
+      "startDate": "2026-08-02",
+      "endDate": "2026-08-04"
+    },
+    {
+      "id": "1765787356024",
+      "cohort": "UC-3XX",
+      "name": "Review P3 Draft report",
+      "startDate": "2026-08-02",
+      "endDate": "2026-08-04"
+    },
+    {
+      "id": "1765787418582",
+      "cohort": "UC-2XX",
+      "name": "Submit P3 Report",
+      "startDate": "2026-08-31",
+      "endDate": "2026-08-31"
+    },
+    {
+      "id": "1765787440658",
+      "cohort": "UC-3XX",
+      "name": "Submit P3 Report",
+      "startDate": "2026-08-31",
+      "endDate": "2026-08-31"
+    },
+    {
+      "id": "1765787490283",
+      "cohort": "UC-2XX",
+      "name": "P3 Report Evaluation",
+      "startDate": "2026-09-01",
+      "endDate": "2026-09-25"
+    },
+    {
+      "id": "1765787533346",
+      "cohort": "UC-3XX",
+      "name": "P3 Report Evaluation",
+      "startDate": "2026-09-01",
+      "endDate": "2026-09-25"
+    },
+    {
+      "id": "1765787572090",
+      "cohort": "UC-2XX",
+      "name": "Send P3 Evaluation Feedback",
+      "startDate": "2026-09-28",
+      "endDate": "2026-09-30"
+    },
+    {
+      "id": "1765787599916",
+      "cohort": "UC-3XX",
+      "name": "Send P3 Evaluation Feedback",
+      "startDate": "2026-09-28",
+      "endDate": "2026-09-30"
+    },
+    {
+      "id": "1765787647761",
+      "cohort": "UC-2XX",
+      "name": "Review draft P4 report",
+      "startDate": "2026-11-02",
+      "endDate": "2026-11-05"
+    },
+    {
+      "id": "1765787666279",
+      "cohort": "UC-3XX",
+      "name": "Review draft P4 report",
+      "startDate": "2026-11-02",
+      "endDate": "2026-11-05"
+    },
+    {
+      "id": "1765787717236",
+      "cohort": "UC-2XX",
+      "name": "Submit P4 Report",
+      "startDate": "2026-11-30",
+      "endDate": "2026-11-30"
+    },
+    {
+      "id": "1765787730757",
+      "cohort": "UC-3XX",
+      "name": "Submit P4 Report",
+      "startDate": "2026-11-30",
+      "endDate": "2026-11-30"
+    },
+    {
+      "id": "1765787791128",
+      "cohort": "UC-2XX",
+      "name": "P4 Report Evaluation",
+      "startDate": "2026-12-01",
+      "endDate": "2026-12-18"
+    },
+    {
+      "id": "1765787809513",
+      "cohort": "UC-3XX",
+      "name": "P4 Report Evaluation",
+      "startDate": "2026-12-01",
+      "endDate": "2026-12-18"
+    },
+    {
+      "id": "1765787846571",
+      "cohort": "UC-2XX",
+      "name": "Send P4 Evaluation Feedback",
+      "startDate": "2026-12-21",
+      "endDate": "2026-12-21"
+    },
+    {
+      "id": "1765787869723",
+      "cohort": "UC-3XX",
+      "name": "Send P4 Evaluation Feedback",
+      "startDate": "2026-12-21",
+      "endDate": "2026-12-21"
+    },
+    {
+      "id": "1765788260889",
+      "cohort": "UC-1XX",
+      "name": "P4 Evaluation",
+      "startDate": "2026-03-30",
+      "endDate": "2026-04-17"
+    },
+    {
+      "id": "1765788306780",
+      "cohort": "UC-1XX",
+      "name": "Send P4 Evaluation Feedback",
+      "startDate": "2026-04-20",
+      "endDate": "2026-04-22"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1765293321400",
+      "useCaseId": "1765293294888",
+      "title": "Submit Phase 3 Report Draft",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2025-12-15",
+      "endDate": "2025-12-15"
+    },
+    {
+      "id": "1765293348233",
+      "useCaseId": "1765293294888",
+      "title": "Submit Phase 3 Report",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-01-05",
+      "endDate": "2026-01-05"
+    },
+    {
+      "id": "1765293432225",
+      "useCaseId": "1765293294888",
+      "title": "Send Evaluation Feedback",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-01-26",
+      "endDate": "2026-01-30"
+    },
+    {
+      "id": "1765294080709",
+      "useCaseId": "1765293855512",
+      "title": "Submit Outline",
+      "isMilestone": true,
+      "notes": "",
+      "date": "2025-12-08"
+    },
+    {
+      "id": "1765294132168",
+      "useCaseId": "1765293855512",
+      "title": "Review Outline",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2025-12-09",
+      "endDate": "2025-12-11"
+    },
+    {
+      "id": "1765294166536",
+      "useCaseId": "1765293855512",
+      "title": "Phase 2 decision",
+      "isMilestone": true,
+      "notes": "",
+      "date": "2025-12-12"
+    },
+    {
+      "id": "1765294390596",
+      "useCaseId": "1765294365726",
+      "title": "Christmas Holiday",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2025-12-24",
+      "endDate": "2026-01-02"
+    },
+    {
+      "id": "1765294437206",
+      "useCaseId": "1765294026550",
+      "title": "Submit outline",
+      "isMilestone": true,
+      "notes": "",
+      "date": "2025-12-15"
+    },
+    {
+      "id": "1765294470591",
+      "useCaseId": "1765294026550",
+      "title": "Review outlines",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2025-12-16",
+      "endDate": "2025-12-18"
+    },
+    {
+      "id": "1765294489490",
+      "useCaseId": "1765294026550",
+      "title": "Phase 2 decision",
+      "isMilestone": true,
+      "notes": "",
+      "date": "2025-12-19"
+    },
+    {
+      "id": "1765294657554",
+      "useCaseId": "1765294365726",
+      "title": "Davos - Quantum Session",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-01-22",
+      "endDate": "2026-01-22"
+    },
+    {
+      "id": "1765294723827",
+      "useCaseId": "1765294365726",
+      "title": "UN/Q GESDA event",
+      "isMilestone": false,
+      "notes": "CL in NY",
+      "startDate": "2026-01-19",
+      "endDate": "2026-01-19"
+    },
+    {
+      "id": "1765294776163",
+      "useCaseId": "1765293822420",
+      "title": "Submit Proposal",
+      "isMilestone": true,
+      "notes": "",
+      "date": "2026-02-02"
+    },
+    {
+      "id": "1765294926113",
+      "useCaseId": "1765293822420",
+      "title": "Compile feedback",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-02-17",
+      "endDate": "2026-02-20"
+    },
+    {
+      "id": "1765295289874",
+      "useCaseId": "1765294026550",
+      "title": "Mid-term Review",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-03-02",
+      "endDate": "2026-03-06"
+    },
+    {
+      "id": "1765295581668",
+      "useCaseId": "1765294026550",
+      "title": "Submit P2 proposal",
+      "isMilestone": true,
+      "notes": "",
+      "date": "2026-04-27"
+    },
+    {
+      "id": "1765295719723",
+      "useCaseId": "1765294026550",
+      "title": "Send P2 Evaluation Feedback",
+      "isMilestone": true,
+      "notes": "",
+      "date": "2026-05-18"
+    },
+    {
+      "id": "1765788127016",
+      "useCaseId": "1765293294888",
+      "title": "Submit P4 Report",
+      "isMilestone": true,
+      "notes": "",
+      "date": "2026-03-27"
+    },
+    {
+      "id": "1765788442788",
+      "useCaseId": "1765294365726",
+      "title": "CL OOO",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-02-23",
+      "endDate": "2026-02-23"
+    },
+    {
+      "id": "1765788477195",
+      "useCaseId": "1765294365726",
+      "title": "Holiday",
+      "isMilestone": false,
+      "notes": "Easter",
+      "startDate": "2026-04-03",
+      "endDate": "2026-04-06"
+    },
+    {
+      "id": "1765788533019",
+      "useCaseId": "1765294365726",
+      "title": "Holiday",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-05-15",
+      "endDate": "2026-05-15"
+    },
+    {
+      "id": "1765788567380",
+      "useCaseId": "1765294365726",
+      "title": "Holiday",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-05-25",
+      "endDate": "2026-05-25"
+    },
+    {
+      "id": "1765788599498",
+      "useCaseId": "1765294365726",
+      "title": "Holiday",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-06-03",
+      "endDate": "2026-06-03"
+    },
+    {
+      "id": "1765788629967",
+      "useCaseId": "1765294365726",
+      "title": "Holiday",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-09-09",
+      "endDate": "2026-09-09"
+    },
+    {
+      "id": "1765788651387",
+      "useCaseId": "1765294365726",
+      "title": "Holiday",
+      "isMilestone": false,
+      "notes": "",
+      "startDate": "2026-12-25",
+      "endDate": "2026-12-25"
+    },
+    {
+      "id": "1765790175712",
+      "useCaseId": "1765294365726",
+      "title": "test",
+      "isMilestone": false,
+      "notes": "test",
+      "startDate": "2025-12-15",
+      "endDate": "2025-12-15"
+    }
+  ],
+  "lastModified": "2025-12-15T09:16:20.508Z"
+}

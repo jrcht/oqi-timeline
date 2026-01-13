@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>Use Case Timeline Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            color: #1a1a1a;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 40px;
+            border-bottom: 1px solid #34495e;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 40px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .view-toggle button {
+            padding: 8px 24px;
+            border: none;
+            background: white;
+            color: #444;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            border-right: 1px solid #d0d0d0;
+        }
+
+        .view-toggle button:last-child {
+            border-right: none;
+        }
+
+        .view-toggle button.active {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            background: white;
+            color: #444;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #f8f8f8;
+            border-color: #999;
+        }
+
+        .btn-primary {
+            background: #2c3e50;
+            color: white;
+            border-color: #2c3e50;
+        }
+
+        .btn-primary:hover {
+            background: #34495e;
+            border-color: #34495e;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        /* TIMELINE VIEW (General Overview) */
+        .timeline-container {
+            background: white;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .timeline-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .cohort-filter {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .cohort-filter label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .cohort-filter select {
+            padding: 6px 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            background: white;
+            color: #444;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .cohort-filter select:focus {
+            outline: none;
+            border-color: #2c3e50;
+        }
+
+        .settings-dropdown {
+            position: relative;
+        }
+
+        .settings-button {
+            padding: 8px 16px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            background: white;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .settings-button:hover {
+            background: #f8f8f8;
+            border-color: #999;
+        }
+
+        .settings-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .settings-menu.active {
+            display: block;
+        }
+
+        .settings-menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #444;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .settings-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-menu-item:hover {
+            background: #f8f8f8;
+        }
+
+        .settings-menu-separator {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 4px 0;
+        }
+
+        .timeline-grid {
+            position: relative;
+        }
+
+        .timeline-header-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            border-bottom: 2px solid #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+        }
+
+        .timeline-header-cell {
+            font-weight: 600;
+            font-size: 13px;
+            color: #2c3e50;
+            text-transform: uppercase;
+        }
+
+        .timeline-months {
+            display: flex;
+            position: relative;
+            padding-left: 10px;
+        }
+
+        .timeline-month {
+            flex: 1;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            border-left: 1px solid #e0e0e0;
+            padding: 0 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .timeline-month.zoomed-out {
+            font-size: 9px;
+        }
+
+        .timeline-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            min-height: 60px;
+        }
+
+        .timeline-row:hover {
+            background: #fafafa;
+        }
+
+        .timeline-row.has-tasks {
+            min-height: 70px;
+        }
+
+        .use-case-name {
+            font-weight: 500;
+            font-size: 14px;
+            color: #1a1a1a;
+            padding-right: 20px;
+        }
+
+        .use-case-cohort {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .timeline-bars {
+            position: relative;
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-bar {
+            position: absolute;
+            height: 24px;
+            background: #3498db;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 11px;
+            color: white;
+            font-weight: 500;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .timeline-bar:hover {
+            height: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+
+        .timeline-bar.cohort-period {
+            height: 32px;
+            border: 2px solid;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            font-weight: 600;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .timeline-bar.cohort-period:hover {
+            height: 36px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+        }
+
+        .timeline-milestone {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #e74c3c;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px #e74c3c;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .timeline-milestone:hover {
+            width: 16px;
+            height: 16px;
+            margin-top: -2px;
+        }
+
+        .timeline-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* GRANULAR VIEW (Detailed Tasks) */
+        .granular-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            height: calc(100vh - 200px);
+        }
+
+        .use-case-sidebar {
+            border-right: 1px solid #e0e0e0;
+            padding-right: 30px;
+            overflow-y: auto;
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .use-case-list-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .use-case-list-item:hover {
+            background: #f8f8f8;
+            border-color: #999;
+        }
+
+        .use-case-list-item.active {
+            background: #2c3e50;
+            color: white;
+            border-color: #2c3e50;
+        }
+
+        .use-case-list-name {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .use-case-list-cohort {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .use-case-list-item.active .use-case-list-cohort {
+            opacity: 0.9;
+        }
+
+        .task-detail-panel {
+            overflow-y: auto;
+        }
+
+        .detail-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .detail-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .detail-cohort {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .detail-description {
+            font-size: 14px;
+            color: #444;
+            line-height: 1.6;
+        }
+
+        .task-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 16px;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .task-card:hover {
+            border-color: #999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .task-card.milestone {
+            border-left: 3px solid #e74c3c;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .task-title {
+            font-weight: 500;
+            font-size: 14px;
+            color: #1a1a1a;
+            flex: 1;
+        }
+
+        .task-type {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .task-type.milestone {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .task-type.task {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .task-date {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .task-notes {
+            font-size: 13px;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 4px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #1a1a1a;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #1a1a1a;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2c3e50;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+
+        .timeline-tooltip {
+            position: fixed;
+            background: #2c3e50;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            z-index: 10000;
+            pointer-events: none;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            line-height: 1.5;
+        }
+
+        .timeline-tooltip strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .timeline-tooltip .date-range {
+            color: #95a5a6;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .upcoming-section {
+            margin-top: 40px;
+            padding: 30px 40px;
+            background: white;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .upcoming-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .upcoming-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+        }
+
+        .upcoming-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .upcoming-item:hover {
+            border-color: #999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .upcoming-item.milestone {
+            border-left: 3px solid #e74c3c;
+        }
+
+        .upcoming-item.task {
+            border-left: 3px solid #3498db;
+        }
+
+        .upcoming-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 6px;
+        }
+
+        .upcoming-item-title {
+            font-weight: 500;
+            font-size: 14px;
+            color: #1a1a1a;
+        }
+
+        .upcoming-item-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 2px;
+            text-transform: uppercase;
+        }
+
+        .upcoming-item-meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .upcoming-item-date {
+            font-size: 11px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>OQI Use Case Timeline Manager</h1>
+        </div>
+
+        <div class="controls">
+            <div class="view-toggle">
+                <button class="active" onclick="switchView('timeline')">Timeline Overview</button>
+                <button onclick="switchView('granular')">Detailed Tasks</button>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="openModal('task')">Add Task</button>
+                <div class="settings-dropdown">
+                    <button class="settings-button" onclick="toggleSettingsMenu()">
+                        Settings
+                        <span style="font-size: 10px;">▼</span>
+                    </button>
+                    <div class="settings-menu" id="settingsMenu">
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); openModal('useCase');">
+                            Add Use Case
+                        </div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); openModal('period');">
+                            Add Evaluation Period
+                        </div>
+                        <div class="settings-menu-separator"></div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); openLocalFile();">
+                            Open Local File
+                        </div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); saveToLocalFile();" id="saveFileItem" style="display: none;">
+                            Save Changes
+                        </div>
+                        <div class="settings-menu-separator"></div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); exportData();">
+                            Export as New File
+                        </div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); document.getElementById('importFile').click();">
+                            Import Data
+                        </div>
+                        <div class="settings-menu-separator"></div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); openModal('gitSettings');">
+                            Git Settings
+                        </div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); syncToGitHub();" id="syncMenuItem" style="display: none;">
+                            Push to GitHub
+                        </div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); loadFromGitHub();" id="pullMenuItem" style="display: none;">
+                            Pull from GitHub
+                        </div>
+                    </div>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- TIMELINE VIEW -->
+            <div id="timelineView" class="timeline-container">
+                <div class="timeline-header">
+                    <h2 class="timeline-title">Evaluation Periods & Milestones</h2>
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <div class="cohort-filter">
+                            <label>Filter by cohort:</label>
+                            <select id="cohortFilter" onchange="handleCohortFilterChange()">
+                                <option value="">All Cohorts</option>
+                            </select>
+                        </div>
+                        <div class="cohort-filter">
+                            <label>Timeline zoom:</label>
+                            <select id="timelineZoom" onchange="handleZoomChange()">
+                                <option value="3">3 months</option>
+                                <option value="6">6 months</option>
+                                <option value="12" selected>12 months</option>
+                                <option value="18">18 months</option>
+                                <option value="24">24 months</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-grid" id="timelineGrid"></div>
+                <div class="timeline-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <span>Evaluation Period</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c; border-radius: 50%; width: 12px; height: 12px;"></div>
+                        <span>Milestone</span>
+                    </div>
+                </div>
+                
+                <div class="upcoming-section">
+                    <h3 class="upcoming-title">Next 5 Tasks & Milestones</h3>
+                    <div class="upcoming-list" id="upcomingList"></div>
+                </div>
+            </div>
+
+            <!-- GRANULAR VIEW -->
+            <div id="granularView" class="granular-container" style="display: none;">
+                <div class="use-case-sidebar">
+                    <h3 class="sidebar-title">Cohorts</h3>
+                    <div id="useCaseSidebar"></div>
+                </div>
+                <div class="task-detail-panel" id="taskDetailPanel">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-text">Select a cohort to view use cases and tasks</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Case Modal -->
+    <div class="modal" id="useCaseModal">
+        <div class="modal-content">
+            <h2 class="modal-header">Add Use Case</h2>
+            <form id="useCaseForm">
+                <div class="form-group">
+                    <label>Use Case Name</label>
+                    <input type="text" id="useCaseName" required>
+                </div>
+                <div class="form-group">
+                    <label>Cohort/Tag</label>
+                    <input type="text" id="useCaseCohort" placeholder="e.g., Marketing, Development, Q1 2025" required>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" id="useCaseColor" value="#3498db">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="useCaseDescription" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Use Case</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Evaluation Period Modal -->
+    <div class="modal" id="periodModal">
+        <div class="modal-content">
+            <h2 class="modal-header">Add Evaluation Period</h2>
+            <form id="periodForm">
+                <div class="form-group" id="periodCohortSelectGroup">
+                    <label>Cohort</label>
+                    <select id="periodCohortSelect" required>
+                        <option value="">Select a cohort</option>
+                    </select>
+                </div>
+                <div id="periodCohortInfo" style="display: none; background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 20px; font-size: 13px; color: #444;"></div>
+                <div class="form-group">
+                    <label>Period Name</label>
+                    <input type="text" id="periodName" placeholder="e.g., Testing Phase, Pilot Program, Q1 Rollout" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="periodStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="periodEndDate" required>
+                    </div>
+                </div>
+                <div style="background: #f8f8f8; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 13px; color: #666;">
+                    <strong>Note:</strong> This evaluation period will apply to all use cases in the selected cohort.
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Period</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <h2 class="modal-header">Add Task</h2>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label>Use Case</label>
+                    <select id="taskUseCase" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="taskIsMilestone">
+                        <label style="margin: 0;">Mark as milestone (single date)</label>
+                    </div>
+                </div>
+                <div id="taskDateSection">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" id="taskStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" id="taskEndDate">
+                            <small style="color: #666; font-size: 11px; display: block; margin-top: 4px;">
+                                Leave empty for single-day task
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div id="milestoneDateSection" style="display: none;">
+                    <div class="form-group">
+                        <label>Milestone Date</label>
+                        <input type="date" id="taskMilestoneDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="taskNotes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Git Settings Modal -->
+    <div class="modal" id="gitSettingsModal">
+        <div class="modal-content">
+            <h2 class="modal-header">GitHub Integration Settings</h2>
+            <form id="gitSettingsForm">
+                <div class="form-group">
+                    <label>GitHub Personal Access Token</label>
+                    <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" required>
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">
+                        Create at: github.com/settings/tokens (needs 'repo' scope)
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Repository Owner</label>
+                    <input type="text" id="githubOwner" placeholder="your-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Repository Name</label>
+                    <input type="text" id="githubRepo" placeholder="timeline-data" required>
+                </div>
+                <div class="form-group">
+                    <label>File Path</label>
+                    <input type="text" id="githubPath" value="timeline-data.json" required>
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;">
+                        Path in repository where data will be saved
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Branch</label>
+                    <input type="text" id="githubBranch" value="main" required>
+                </div>
+                <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 13px;">
+                    <strong>⚠️ Security Note:</strong> Your token is stored in browser localStorage. Keep it secure and don't share this browser profile.
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Cohort Modal -->
+    <div class="modal" id="editCohortModal">
+        <div class="modal-content">
+            <h2 class="modal-header">Edit Cohort</h2>
+            <form id="editCohortForm">
+                <div class="form-group">
+                    <label>Cohort Name</label>
+                    <input type="text" id="editCohortName" required>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" id="editCohortColor">
+                </div>
+                <div style="background: #f0f0f0; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 13px; color: #666;">
+                    <strong>Note:</strong> Renaming will update all use cases in this cohort. Color change applies to the first use case in the cohort.
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Period Modal -->
+    <div class="modal" id="editPeriodModal">
+        <div class="modal-content">
+            <h2 class="modal-header">Edit Evaluation Period</h2>
+            <form id="editPeriodForm">
+                <div class="form-group">
+                    <label>Period Name</label>
+                    <input type="text" id="editPeriodName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="editPeriodStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="editPeriodEndDate" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-delete" onclick="deletePeriodFromEdit()">Delete Period</button>
+                    <div style="flex: 1;"></div>
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div class="modal" id="editTaskModal">
+        <div class="modal-content">
+            <h2 class="modal-header">Edit Task</h2>
+            <form id="editTaskForm">
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="editTaskTitle" required>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="editTaskIsMilestone">
+                        <label style="margin: 0;">Mark as milestone (single date)</label>
+                    </div>
+                </div>
+                <div id="editTaskDateSection">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" id="editTaskStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" id="editTaskEndDate">
+                            <small style="color: #666; font-size: 11px; display: block; margin-top: 4px;">
+                                Leave empty for single-day task
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div id="editMilestoneDateSection" style="display: none;">
+                    <div class="form-group">
+                        <label>Milestone Date</label>
+                        <input type="date" id="editTaskMilestoneDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="editTaskNotes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-delete" onclick="deleteTaskFromEdit()">Delete Task</button>
+                    <div style="flex: 1;"></div>
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data structure
+        let useCases = [];
+        let evaluationPeriods = []; // Now cohort-level
+        let tasks = [];
+        let currentView = 'timeline';
+        let activeCohorts = new Set();
+        let selectedUseCaseId = null;
+        let selectedCohort = null;
+        let gitSettings = null;
+        let timelineZoomMonths = 12; // Default 12 months view
+        let fileHandle = null; // Handle for the currently opened local file
+        let autoSaveTimer = null; // Timer for auto-save
+
+        // Load data
+        function loadData() {
+            const savedUseCases = localStorage.getItem('useCases');
+            const savedPeriods = localStorage.getItem('evaluationPeriods');
+            const savedTasks = localStorage.getItem('tasks');
+            const savedGitSettings = localStorage.getItem('gitSettings');
+            
+            if (savedUseCases) useCases = JSON.parse(savedUseCases);
+            if (savedPeriods) evaluationPeriods = JSON.parse(savedPeriods);
+            if (savedTasks) tasks = JSON.parse(savedTasks);
+            if (savedGitSettings) {
+                gitSettings = JSON.parse(savedGitSettings);
+                document.getElementById('syncMenuItem').style.display = 'flex';
+                document.getElementById('pullMenuItem').style.display = 'flex';
+            }
+        }
+
+        // Save data
+        function saveData() {
+            localStorage.setItem('useCases', JSON.stringify(useCases));
+            localStorage.setItem('evaluationPeriods', JSON.stringify(evaluationPeriods));
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            if (gitSettings) {
+                localStorage.setItem('gitSettings', JSON.stringify(gitSettings));
+            }
+            
+            // Trigger auto-save if file is open
+            if (fileHandle) {
+                triggerAutoSave();
+            }
+        }
+        
+        function triggerAutoSave() {
+            // Clear existing timer
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            
+            // Show "Saving..." indicator
+            const saveItem = document.getElementById('saveFileItem');
+            if (saveItem) {
+                saveItem.textContent = 'Saving...';
+                saveItem.style.color = '#f39c12'; // Orange
+                saveItem.style.display = 'flex'; // Ensure it's visible
+            }
+            
+            // Set new timer (debounce 2 seconds)
+            autoSaveTimer = setTimeout(() => {
+                saveToLocalFile(true); // true = quiet mode
+            }, 2000);
+        }
+
+        // Initialize
+        function init() {
+            loadData();
+            renderTimeline();
+            updateCohortFilter();
+            updateUseCaseSelects();
+            document.getElementById('taskStartDate').valueAsDate = new Date();
+            document.getElementById('periodStartDate').valueAsDate = new Date();
+            
+            // Add keydown listener for Ctrl/Cmd+S
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    if (fileHandle) {
+                        saveToLocalFile();
+                    } else {
+                        // If no file open, maybe trigger export or alert? 
+                        // For now let's prompt to open/save-as logic if we wanted to get fancy, 
+                        // but sticking to "save open file" is safer.
+                        alert('Please "Open Local File" first to enable direct saving.');
+                    }
+                }
+            });
+
+            // Add milestone checkbox listener
+            document.getElementById('taskIsMilestone').addEventListener('change', function() {
+                const taskDateSection = document.getElementById('taskDateSection');
+                const milestoneDateSection = document.getElementById('milestoneDateSection');
+                
+                if (this.checked) {
+                    taskDateSection.style.display = 'none';
+                    milestoneDateSection.style.display = 'block';
+                    document.getElementById('taskMilestoneDate').required = true;
+                    document.getElementById('taskStartDate').required = false;
+                    document.getElementById('taskEndDate').required = false;
+                } else {
+                    taskDateSection.style.display = 'block';
+                    milestoneDateSection.style.display = 'none';
+                    document.getElementById('taskMilestoneDate').required = false;
+                    document.getElementById('taskStartDate').required = true;
+                    document.getElementById('taskEndDate').required = false;
+                }
+            });
+        }
+
+        // Switch views
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('timelineView').style.display = view === 'timeline' ? 'block' : 'none';
+            document.getElementById('granularView').style.display = view === 'granular' ? 'grid' : 'none';
+            
+            document.querySelectorAll('.view-toggle button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            if (view === 'timeline') {
+                renderTimeline();
+            } else {
+                renderGranularView();
+            }
+        }
+
+        // Render timeline view
+        function renderTimeline() {
+            const grid = document.getElementById('timelineGrid');
+            
+            // Get date range based on zoom level
+            const now = new Date();
+            const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const endDate = new Date(now.getFullYear(), now.getMonth() + timelineZoomMonths - 1, 0);
+            const months = [];
+            
+            for (let d = new Date(startDate); d <= endDate; d.setMonth(d.getMonth() + 1)) {
+                months.push(new Date(d));
+            }
+            
+            // Get cohorts
+            const allCohorts = [...new Set(useCases.map(uc => uc.cohort))];
+            const filteredCohorts = activeCohorts.size === 0 ? allCohorts : allCohorts.filter(c => activeCohorts.has(c));
+            
+            // Build header with months only
+            let html = '<div class="timeline-header-row">';
+            html += '<div class="timeline-header-cell">Use Case</div>';
+            html += '<div class="timeline-header-cell"><div class="timeline-months">';
+            
+            const isZoomedOut = timelineZoomMonths > 12;
+            months.forEach(month => {
+                const monthClass = isZoomedOut ? 'timeline-month zoomed-out' : 'timeline-month';
+                html += `<div class="${monthClass}">${month.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}</div>`;
+            });
+            html += '</div></div></div>';
+            
+            // Build rows grouped by cohort
+            filteredCohorts.forEach(cohort => {
+                const cohortUseCases = useCases.filter(uc => uc.cohort === cohort);
+                const cohortPeriods = evaluationPeriods.filter(p => p.cohort === cohort);
+                const firstUseCase = cohortUseCases[0];
+                
+                // Cohort header row with evaluation periods
+                html += '<div class="timeline-row cohort-row" style="background: #fafafa; font-weight: 600; border-top: 2px solid #d0d0d0; border-bottom: 1px solid #e0e0e0;">';
+                html += `<div>
+                    <div class="use-case-name" style="color: #2c3e50; display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 12px; height: 12px; background: ${firstUseCase.color}; border-radius: 2px; display: inline-block;"></span>
+                        ${cohort}
+                        <button onclick="editCohort('${cohort.replace(/'/g, "\\'")}'); return false;" style="padding: 2px 8px; font-size: 11px; margin-left: 8px; background: #fff; border: 1px solid #d0d0d0; border-radius: 3px; cursor: pointer; color: #666;">Edit</button>
+                    </div>
+                    <div class="use-case-cohort" style="color: #666;">${cohortPeriods.length} evaluation period${cohortPeriods.length !== 1 ? 's' : ''}</div>
+                </div>`;
+                html += '<div class="timeline-bars" style="height: 60px; position: relative;">';
+                
+                // Add cohort evaluation periods with improved tooltips
+                cohortPeriods.forEach((period, index) => {
+                    const start = new Date(period.startDate);
+                    const end = new Date(period.endDate);
+                    const leftPercent = ((start - startDate) / (endDate - startDate)) * 100;
+                    const widthPercent = ((end - start) / (endDate - startDate)) * 100;
+                    const topOffset = (index % 2) * 32;
+                    
+                    const tooltipText = `${period.name}|||${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                    
+                    html += `<div class="timeline-bar cohort-period" 
+                        style="left: ${leftPercent}%; width: ${widthPercent}%; background: ${firstUseCase.color}; border-color: ${firstUseCase.color}; top: ${topOffset}px;"
+                        onclick="editPeriod('${period.id}'); return false;"
+                        onmouseenter="showTooltip(event, '${tooltipText}')"
+                        onmouseleave="hideTooltip()">
+                        <span style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${period.name}</span>
+                    </div>`;
+                });
+                
+                html += '</div></div>';
+                
+                // Individual use cases within cohort
+                cohortUseCases.forEach(useCase => {
+                    const milestones = tasks.filter(t => t.useCaseId === useCase.id && t.isMilestone);
+                    const regularTasks = tasks.filter(t => t.useCaseId === useCase.id && !t.isMilestone);
+                    
+                    html += '<div class="timeline-row" style="background: white;">';
+                    html += `<div style="padding-left: 20px;">
+                        <div class="use-case-name" style="font-size: 13px;">${useCase.name}</div>
+                        <div class="use-case-cohort" style="font-size: 11px; color: #999;">${milestones.length} milestone${milestones.length !== 1 ? 's' : ''}, ${regularTasks.length} task${regularTasks.length !== 1 ? 's' : ''}</div>
+                    </div>`;
+                    html += '<div class="timeline-bars" style="height: 50px; position: relative;">';
+                    
+                    // Show cohort periods as subtle background context
+                    cohortPeriods.forEach(period => {
+                        const start = new Date(period.startDate);
+                        const end = new Date(period.endDate);
+                        const leftPercent = ((start - startDate) / (endDate - startDate)) * 100;
+                        const widthPercent = ((end - start) / (endDate - startDate)) * 100;
+                        
+                        html += `<div style="position: absolute; left: ${leftPercent}%; width: ${widthPercent}%; height: 100%; background: ${useCase.color}10; border-left: 2px solid ${useCase.color}30; border-right: 2px solid ${useCase.color}30;"></div>`;
+                    });
+                    
+                    // Add regular tasks as bars
+                    regularTasks.forEach((task, idx) => {
+                        const start = new Date(task.startDate);
+                        const end = new Date(task.endDate);
+                        const leftPercent = ((start - startDate) / (endDate - startDate)) * 100;
+                        const widthPercent = ((end - start) / (endDate - startDate)) * 100;
+                        const isMultiDay = task.startDate !== task.endDate;
+                        const displayWidth = isMultiDay ? Math.max(widthPercent, 2) : 2;
+                        const topOffset = (idx % 2) * 22;
+                        
+                        const dateStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const dateRange = isMultiDay ? `${dateStr} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : dateStr;
+                        const tooltipText = `${task.title}|||${dateRange}${task.notes ? '|||' + task.notes : ''}`;
+                        
+                        html += `<div class="timeline-bar" 
+                            style="left: ${leftPercent}%; width: ${displayWidth}%; background: ${useCase.color}BB; top: ${topOffset}px; height: 18px; font-size: 10px;"
+                            onmouseenter="showTooltip(event, '${tooltipText.replace(/'/g, "\\'")}', 'task')"
+                            onmouseleave="hideTooltip()">
+                            ${isMultiDay ? task.title : ''}
+                        </div>`;
+                    });
+                    
+                    // Add milestones
+                    milestones.forEach(milestone => {
+                        const date = new Date(milestone.date);
+                        const leftPercent = ((date - startDate) / (endDate - startDate)) * 100;
+                        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const tooltipText = `${milestone.title}|||${dateStr}${milestone.notes ? '|||' + milestone.notes : ''}`;
+                        
+                        html += `<div class="timeline-milestone" 
+                            style="left: ${leftPercent}%; background: ${useCase.color}; box-shadow: 0 0 0 2px white, 0 0 0 3px ${useCase.color};"
+                            onmouseenter="showTooltip(event, '${tooltipText.replace(/'/g, "\\'")}', 'milestone')"
+                            onmouseleave="hideTooltip()">
+                        </div>`;
+                    });
+                    
+                    html += '</div></div>';
+                });
+            });
+            
+            if (filteredCohorts.length === 0) {
+                html += '<div class="empty-state" style="grid-column: 1 / -1; padding: 40px;">';
+                html += '<div class="empty-state-icon">📊</div>';
+                html += '<div class="empty-state-text">No use cases to display. Add a use case to get started.</div>';
+                html += '</div>';
+            }
+            
+            grid.innerHTML = html;
+            
+            // Render upcoming tasks
+            renderUpcomingTasks();
+        }
+
+        // Render granular view
+        function renderGranularView() {
+            renderCohortSidebar();
+            if (selectedCohort) {
+                renderCohortDetail(selectedCohort);
+            }
+        }
+
+        // Render cohort sidebar
+        function renderCohortSidebar() {
+            const sidebar = document.getElementById('useCaseSidebar');
+            
+            if (useCases.length === 0) {
+                sidebar.innerHTML = '<div class="empty-state"><div class="empty-state-text">No cohorts yet</div></div>';
+                return;
+            }
+            
+            const cohorts = [...new Set(useCases.map(uc => uc.cohort))];
+            
+            let html = '';
+            cohorts.forEach(cohort => {
+                const cohortUseCases = useCases.filter(uc => uc.cohort === cohort);
+                const firstUseCase = cohortUseCases[0];
+                const isActive = selectedCohort === cohort;
+                
+                html += `<div class="use-case-list-item ${isActive ? 'active' : ''}" onclick="selectCohort('${cohort}')">
+                    <div class="use-case-list-name" style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 10px; height: 10px; background: ${firstUseCase.color}; border-radius: 2px; display: inline-block;"></span>
+                        ${cohort}
+                    </div>
+                    <div class="use-case-list-cohort">${cohortUseCases.length} use case${cohortUseCases.length !== 1 ? 's' : ''}</div>
+                </div>`;
+            });
+            
+            sidebar.innerHTML = html;
+        }
+
+        // Select cohort
+        function selectCohort(cohort) {
+            selectedCohort = cohort;
+            selectedUseCaseId = null;
+            renderCohortSidebar();
+            renderCohortDetail(cohort);
+        }
+
+        // Select use case (when clicked in cohort detail)
+        function selectUseCase(id) {
+            selectedUseCaseId = id;
+            const useCase = useCases.find(uc => uc.id === id);
+            if (useCase) {
+                renderCohortDetail(useCase.cohort);
+            }
+        }
+
+        // Render cohort detail
+        function renderCohortDetail(cohort) {
+            const panel = document.getElementById('taskDetailPanel');
+            const cohortUseCases = useCases.filter(uc => uc.cohort === cohort);
+            const cohortPeriods = evaluationPeriods.filter(p => p.cohort === cohort);
+            const firstUseCase = cohortUseCases[0];
+            
+            let html = `
+                <div class="detail-header">
+                    <div class="detail-title" style="display: flex; align-items: center; gap: 12px;">
+                        <span style="width: 16px; height: 16px; background: ${firstUseCase.color}; border-radius: 3px; display: inline-block;"></span>
+                        ${cohort}
+                    </div>
+                    <div class="detail-cohort">${cohortUseCases.length} use case${cohortUseCases.length !== 1 ? 's' : ''} in this cohort</div>
+                </div>
+            `;
+            
+            // Evaluation Periods (Cohort-level)
+            html += '<div class="task-section">';
+            html += `<div class="section-title">
+                <span>Evaluation Periods (Cohort-Level)</span>
+                <button class="btn btn-primary" onclick="openModalForCohort('period', '${cohort}')">Add Period</button>
+            </div>`;
+            
+            if (cohortPeriods.length === 0) {
+                html += '<div class="empty-state" style="padding: 20px;"><div class="empty-state-text">No evaluation periods defined for this cohort</div></div>';
+            } else {
+                html += '<div class="task-list">';
+                cohortPeriods.forEach(period => {
+                    const start = new Date(period.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const end = new Date(period.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    html += `
+                        <div class="task-card" style="border-left: 3px solid ${firstUseCase.color};">
+                            <div class="task-header">
+                                <div class="task-title">${period.name}</div>
+                                <button class="btn-delete" onclick="deletePeriod('${period.id}')">Delete</button>
+                            </div>
+                            <div class="task-date">${start} → ${end}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+            
+            // Use Cases in this Cohort
+            html += '<div class="task-section">';
+            html += `<div class="section-title">Use Cases</div>`;
+            html += '<div class="task-list">';
+            
+            cohortUseCases.forEach(useCase => {
+                const isExpanded = selectedUseCaseId === useCase.id;
+                const useCaseTasks = tasks.filter(t => t.useCaseId === useCase.id);
+                const milestones = useCaseTasks.filter(t => t.isMilestone).sort((a, b) => new Date(a.date) - new Date(b.date));
+                const regularTasks = useCaseTasks.filter(t => !t.isMilestone).sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                html += `
+                    <div class="task-card" style="cursor: pointer; ${isExpanded ? 'background: #fafafa; border-color: #999;' : ''}" onclick="selectUseCase('${useCase.id}')">
+                        <div class="task-header">
+                            <div>
+                                <div class="task-title" style="font-size: 16px; margin-bottom: 4px;">${useCase.name}</div>
+                                ${useCase.description ? `<div style="font-size: 13px; color: #666; margin-bottom: 8px;">${useCase.description}</div>` : ''}
+                                <div style="font-size: 12px; color: #999;">
+                                    ${milestones.length} milestone${milestones.length !== 1 ? 's' : ''}, ${regularTasks.length} task${regularTasks.length !== 1 ? 's' : ''}
+                                </div>
+                            </div>
+                            <button class="btn-delete" onclick="event.stopPropagation(); deleteUseCase('${useCase.id}')">Delete</button>
+                        </div>
+                `;
+                
+                if (isExpanded) {
+                    // Show milestones
+                    html += '<div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">';
+                    html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="font-weight: 600; font-size: 13px; color: #2c3e50;">MILESTONES</span>
+                        <button class="btn btn-primary" style="padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation(); openModalForUseCase('task', '${useCase.id}', true)">Add Milestone</button>
+                    </div>`;
+                    
+                    if (milestones.length === 0) {
+                        html += '<div style="font-size: 12px; color: #999; margin-bottom: 12px;">No milestones</div>';
+                    } else {
+                        milestones.forEach(milestone => {
+                            const date = new Date(milestone.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            html += `
+                                <div style="padding: 8px; margin-bottom: 6px; background: white; border: 1px solid #e0e0e0; border-radius: 3px; border-left: 3px solid #e74c3c;">
+                                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                                        <div style="flex: 1;">
+                                            <div style="font-size: 13px; font-weight: 500; margin-bottom: 2px;">${milestone.title}</div>
+                                            <div style="font-size: 11px; color: #666;">${date}</div>
+                                            ${milestone.notes ? `<div style="font-size: 12px; color: #444; margin-top: 4px;">${milestone.notes}</div>` : ''}
+                                        </div>
+                                        <div style="display: flex; gap: 4px;">
+                                            <button class="btn" style="padding: 3px 8px; font-size: 11px; border: 1px solid #d0d0d0;" onclick="editTask('${milestone.id}'); event.stopPropagation(); return false;">Edit</button>
+                                            <button class="btn-delete" style="padding: 3px 8px; font-size: 11px;" data-task-id="${milestone.id}">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    // Show tasks
+                    html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 16px;">
+                        <span style="font-weight: 600; font-size: 13px; color: #2c3e50;">TASKS</span>
+                        <button class="btn btn-primary" style="padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation(); openModalForUseCase('task', '${useCase.id}', false)">Add Task</button>
+                    </div>`;
+                    
+                    if (regularTasks.length === 0) {
+                        html += '<div style="font-size: 12px; color: #999;">No tasks</div>';
+                    } else {
+                        regularTasks.forEach(task => {
+                            const startDate = new Date(task.startDate);
+                            const endDate = new Date(task.endDate);
+                            const isMultiDay = task.startDate !== task.endDate;
+                            
+                            let dateDisplay = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            if (isMultiDay) {
+                                dateDisplay += ' → ' + endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            }
+                            
+                            html += `
+                                <div style="padding: 8px; margin-bottom: 6px; background: white; border: 1px solid #e0e0e0; border-radius: 3px; ${isMultiDay ? 'border-left: 3px solid #3498db;' : ''}">
+                                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                                        <div style="flex: 1;">
+                                            <div style="font-size: 13px; font-weight: 500; margin-bottom: 2px;">
+                                                ${task.title}
+                                                ${isMultiDay ? '<span style="background: #3498db; color: white; padding: 2px 6px; border-radius: 2px; font-size: 10px; margin-left: 6px; font-weight: 600;">MULTI-DAY</span>' : ''}
+                                            </div>
+                                            <div style="font-size: 11px; color: #666;">${dateDisplay}</div>
+                                            ${task.notes ? `<div style="font-size: 12px; color: #444; margin-top: 4px;">${task.notes}</div>` : ''}
+                                        </div>
+                                        <div style="display: flex; gap: 4px;">
+                                            <button class="btn" style="padding: 3px 8px; font-size: 11px; border: 1px solid #d0d0d0;" onclick="editTask('${task.id}'); event.stopPropagation(); return false;">Edit</button>
+                                            <button class="btn-delete" style="padding: 3px 8px; font-size: 11px;" data-task-id="${task.id}">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '</div></div>';
+            
+            panel.innerHTML = html;
+            
+            // Add event listeners for delete buttons using event delegation
+            panel.querySelectorAll('.btn-delete[data-task-id]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const taskId = this.getAttribute('data-task-id');
+                    deleteTask(taskId);
+                });
+            });
+        }
+
+        // Update cohort filter
+        function updateCohortFilter() {
+            const cohorts = [...new Set(useCases.map(uc => uc.cohort))];
+            const select = document.getElementById('cohortFilter');
+            
+            if (!select) return;
+            
+            // Store current selection
+            const currentValue = select.value;
+            
+            // Rebuild options
+            select.innerHTML = '<option value="">All Cohorts</option>';
+            
+            cohorts.forEach(cohort => {
+                const useCase = useCases.find(uc => uc.cohort === cohort);
+                const option = document.createElement('option');
+                option.value = cohort;
+                option.textContent = cohort;
+                option.style.color = useCase.color;
+                select.appendChild(option);
+            });
+            
+            // Restore selection if it still exists
+            if (currentValue && cohorts.includes(currentValue)) {
+                select.value = currentValue;
+            } else if (activeCohorts.size > 0) {
+                const firstActive = Array.from(activeCohorts)[0];
+                if (cohorts.includes(firstActive)) {
+                    select.value = firstActive;
+                } else {
+                    select.value = '';
+                    activeCohorts.clear();
+                }
+            }
+        }
+
+        // Handle cohort filter change
+        function handleCohortFilterChange() {
+            const select = document.getElementById('cohortFilter');
+            const selectedCohort = select.value;
+            
+            activeCohorts.clear();
+            if (selectedCohort) {
+                activeCohorts.add(selectedCohort);
+            }
+            
+            renderTimeline();
+        }
+
+        // Handle zoom change
+        function handleZoomChange() {
+            const select = document.getElementById('timelineZoom');
+            timelineZoomMonths = parseInt(select.value);
+            renderTimeline();
+        }
+
+        // Toggle settings menu
+        function toggleSettingsMenu() {
+            const menu = document.getElementById('settingsMenu');
+            menu.classList.toggle('active');
+        }
+
+        function closeSettingsMenu() {
+            const menu = document.getElementById('settingsMenu');
+            menu.classList.remove('active');
+        }
+
+        // Close settings menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const settingsDropdown = document.querySelector('.settings-dropdown');
+            if (settingsDropdown && !settingsDropdown.contains(e.target)) {
+                closeSettingsMenu();
+            }
+        });
+
+        // Update select dropdowns
+        function updateUseCaseSelects() {
+            const selects = ['taskUseCase', 'periodUseCase'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return; // Skip if element doesn't exist
+                
+                select.innerHTML = '<option value="">Select a use case</option>';
+                useCases.forEach(uc => {
+                    const option = document.createElement('option');
+                    option.value = uc.id;
+                    option.textContent = `${uc.name} (${uc.cohort})`;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // Modal functions
+        function openModal(type) {
+            const modalIds = {
+                'useCase': 'useCaseModal',
+                'period': 'periodModal',
+                'task': 'taskModal',
+                'gitSettings': 'gitSettingsModal',
+                'editCohort': 'editCohortModal',
+                'editPeriod': 'editPeriodModal',
+                'editTask': 'editTaskModal'
+            };
+            
+            // For period modal, show cohort selector
+            if (type === 'period') {
+                updateCohortSelect();
+            }
+            
+            // For git settings modal, populate existing settings
+            if (type === 'gitSettings' && gitSettings) {
+                document.getElementById('githubToken').value = gitSettings.token || '';
+                document.getElementById('githubOwner').value = gitSettings.owner || '';
+                document.getElementById('githubRepo').value = gitSettings.repo || '';
+                document.getElementById('githubPath').value = gitSettings.path || 'timeline-data.json';
+                document.getElementById('githubBranch').value = gitSettings.branch || 'main';
+            }
+            
+            document.getElementById(modalIds[type]).classList.add('active');
+        }
+
+        let editingCohortOldName = null;
+        let editingPeriodId = null;
+        let editingTaskId = null;
+
+        // Edit cohort
+        function editCohort(cohortName) {
+            editingCohortOldName = cohortName;
+            const cohortUseCases = useCases.filter(uc => uc.cohort === cohortName);
+            const firstUseCase = cohortUseCases[0];
+            
+            document.getElementById('editCohortName').value = cohortName;
+            document.getElementById('editCohortColor').value = firstUseCase ? firstUseCase.color : '#3498db';
+            openModal('editCohort');
+        }
+
+        // Edit period
+        function editPeriod(periodId) {
+            const period = evaluationPeriods.find(p => p.id === periodId);
+            if (!period) return;
+            
+            editingPeriodId = periodId;
+            document.getElementById('editPeriodName').value = period.name;
+            document.getElementById('editPeriodStartDate').value = period.startDate;
+            document.getElementById('editPeriodEndDate').value = period.endDate;
+            openModal('editPeriod');
+        }
+
+        // Edit task
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            editingTaskId = taskId;
+            document.getElementById('editTaskTitle').value = task.title;
+            document.getElementById('editTaskIsMilestone').checked = task.isMilestone;
+            document.getElementById('editTaskNotes').value = task.notes || '';
+            
+            const editTaskDateSection = document.getElementById('editTaskDateSection');
+            const editMilestoneDateSection = document.getElementById('editMilestoneDateSection');
+            
+            if (task.isMilestone) {
+                editTaskDateSection.style.display = 'none';
+                editMilestoneDateSection.style.display = 'block';
+                document.getElementById('editTaskMilestoneDate').value = task.date;
+                document.getElementById('editTaskMilestoneDate').required = true;
+                document.getElementById('editTaskStartDate').required = false;
+            } else {
+                editTaskDateSection.style.display = 'block';
+                editMilestoneDateSection.style.display = 'none';
+                document.getElementById('editTaskStartDate').value = task.startDate;
+                document.getElementById('editTaskEndDate').value = task.endDate;
+                document.getElementById('editTaskMilestoneDate').required = false;
+                document.getElementById('editTaskStartDate').required = true;
+            }
+            
+            openModal('editTask');
+        }
+
+        function deletePeriodFromEdit() {
+            if (editingPeriodId && confirm('Delete this evaluation period?')) {
+                evaluationPeriods = evaluationPeriods.filter(p => p.id !== editingPeriodId);
+                saveData();
+                closeModal();
+                if (currentView === 'timeline') renderTimeline();
+                else if (selectedCohort) renderCohortDetail(selectedCohort);
+            }
+        }
+
+        function deleteTaskFromEdit() {
+            if (editingTaskId && confirm('Delete this task?')) {
+                tasks = tasks.filter(t => t.id !== editingTaskId);
+                saveData();
+                closeModal();
+                if (currentView === 'timeline') renderTimeline();
+                else if (selectedCohort) renderCohortDetail(selectedCohort);
+            }
+        }
+
+        function openModalForCohort(type, cohort) {
+            openModal(type);
+            if (type === 'period') {
+                // Set cohort in a hidden field or handle it in form submission
+                document.getElementById('periodForm').dataset.cohort = cohort;
+                // Hide cohort selector and show info
+                const cohortInfo = document.getElementById('periodCohortInfo');
+                const cohortSelect = document.getElementById('periodCohortSelectGroup');
+                if (cohortInfo && cohortSelect) {
+                    cohortInfo.style.display = 'block';
+                    cohortInfo.textContent = `Adding evaluation period for cohort: ${cohort}`;
+                    cohortSelect.style.display = 'none';
+                }
+            }
+        }
+
+        function openModalForUseCase(type, useCaseId, isMilestone = false) {
+            openModal(type);
+            if (type === 'task') {
+                document.getElementById('taskUseCase').value = useCaseId;
+                document.getElementById('taskIsMilestone').checked = isMilestone;
+                
+                // Trigger the change event to show/hide appropriate date fields
+                const taskDateSection = document.getElementById('taskDateSection');
+                const milestoneDateSection = document.getElementById('milestoneDateSection');
+                
+                if (isMilestone) {
+                    taskDateSection.style.display = 'none';
+                    milestoneDateSection.style.display = 'block';
+                    document.getElementById('taskMilestoneDate').required = true;
+                    document.getElementById('taskStartDate').required = false;
+                    document.getElementById('taskMilestoneDate').valueAsDate = new Date();
+                } else {
+                    taskDateSection.style.display = 'block';
+                    milestoneDateSection.style.display = 'none';
+                    document.getElementById('taskMilestoneDate').required = false;
+                    document.getElementById('taskStartDate').required = true;
+                    document.getElementById('taskStartDate').valueAsDate = new Date();
+                }
+            }
+        }
+
+        function updateCohortSelect() {
+            const cohorts = [...new Set(useCases.map(uc => uc.cohort))];
+            const select = document.getElementById('periodCohortSelect');
+            if (select) {
+                select.innerHTML = '<option value="">Select a cohort</option>';
+                cohorts.forEach(cohort => {
+                    const option = document.createElement('option');
+                    option.value = cohort;
+                    option.textContent = cohort;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            document.getElementById('useCaseForm').reset();
+            document.getElementById('periodForm').reset();
+            document.getElementById('taskForm').reset();
+            delete document.getElementById('periodForm').dataset.cohort;
+            
+            // Reset editing state
+            editingCohortOldName = null;
+            editingPeriodId = null;
+            editingTaskId = null;
+            
+            // Reset cohort display
+            const cohortInfo = document.getElementById('periodCohortInfo');
+            const cohortSelect = document.getElementById('periodCohortSelectGroup');
+            if (cohortInfo && cohortSelect) {
+                cohortInfo.style.display = 'none';
+                cohortSelect.style.display = 'block';
+            }
+        }
+
+        // Form submissions
+        document.getElementById('useCaseForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const useCase = {
+                id: Date.now().toString(),
+                name: document.getElementById('useCaseName').value,
+                cohort: document.getElementById('useCaseCohort').value,
+                color: document.getElementById('useCaseColor').value,
+                description: document.getElementById('useCaseDescription').value
+            };
+            useCases.push(useCase);
+            saveData();
+            closeModal();
+            updateCohortFilter();
+            updateUseCaseSelects();
+            if (currentView === 'timeline') renderTimeline();
+            else renderGranularView();
+        });
+
+        document.getElementById('periodForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Get cohort from dataset (when opened from cohort detail) or from select (when opened from top button)
+            let cohort = document.getElementById('periodForm').dataset.cohort;
+            
+            if (!cohort) {
+                const cohortSelect = document.getElementById('periodCohortSelect');
+                if (cohortSelect) {
+                    cohort = cohortSelect.value;
+                }
+            }
+            
+            if (!cohort) {
+                alert('Please select a cohort');
+                return;
+            }
+            
+            const period = {
+                id: Date.now().toString(),
+                cohort: cohort,
+                name: document.getElementById('periodName').value,
+                startDate: document.getElementById('periodStartDate').value,
+                endDate: document.getElementById('periodEndDate').value
+            };
+            evaluationPeriods.push(period);
+            saveData();
+            closeModal();
+            if (currentView === 'timeline') renderTimeline();
+            else if (selectedCohort) renderCohortDetail(selectedCohort);
+        });
+
+        document.getElementById('taskForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const isMilestone = document.getElementById('taskIsMilestone').checked;
+            
+            let taskData = {
+                id: Date.now().toString(),
+                useCaseId: document.getElementById('taskUseCase').value,
+                title: document.getElementById('taskTitle').value,
+                isMilestone: isMilestone,
+                notes: document.getElementById('taskNotes').value
+            };
+            
+            if (isMilestone) {
+                taskData.date = document.getElementById('taskMilestoneDate').value;
+            } else {
+                taskData.startDate = document.getElementById('taskStartDate').value;
+                const endDate = document.getElementById('taskEndDate').value;
+                taskData.endDate = endDate || taskData.startDate; // If no end date, use start date
+            }
+            
+            tasks.push(taskData);
+            saveData();
+            closeModal();
+            if (currentView === 'timeline') renderTimeline();
+            else {
+                const useCase = useCases.find(uc => uc.id === taskData.useCaseId);
+                if (useCase) renderCohortDetail(useCase.cohort);
+            }
+        });
+
+        // Git Settings Form
+        document.getElementById('gitSettingsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            gitSettings = {
+                token: document.getElementById('githubToken').value,
+                owner: document.getElementById('githubOwner').value,
+                repo: document.getElementById('githubRepo').value,
+                path: document.getElementById('githubPath').value,
+                branch: document.getElementById('githubBranch').value
+            };
+            saveData();
+            document.getElementById('syncMenuItem').style.display = 'flex';
+            document.getElementById('pullMenuItem').style.display = 'flex';
+            closeModal();
+            alert('GitHub settings saved! You can now sync your data.');
+        });
+
+        // Edit Cohort Form
+        document.getElementById('editCohortForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('editCohortName').value;
+            const newColor = document.getElementById('editCohortColor').value;
+            
+            // Update all use cases with this cohort
+            useCases.forEach(uc => {
+                if (uc.cohort === editingCohortOldName) {
+                    uc.cohort = newName;
+                }
+            });
+            
+            // Update color for first use case in cohort
+            const firstUseCase = useCases.find(uc => uc.cohort === newName);
+            if (firstUseCase) {
+                firstUseCase.color = newColor;
+            }
+            
+            // Update evaluation periods
+            evaluationPeriods.forEach(p => {
+                if (p.cohort === editingCohortOldName) {
+                    p.cohort = newName;
+                }
+            });
+            
+            // Update active cohorts filter if needed
+            if (activeCohorts.has(editingCohortOldName)) {
+                activeCohorts.delete(editingCohortOldName);
+                activeCohorts.add(newName);
+            }
+            
+            // Update selected cohort if needed
+            if (selectedCohort === editingCohortOldName) {
+                selectedCohort = newName;
+            }
+            
+            saveData();
+            updateCohortFilter();
+            updateUseCaseSelects();
+            closeModal();
+            if (currentView === 'timeline') renderTimeline();
+            else renderGranularView();
+        });
+
+        // Edit Period Form
+        document.getElementById('editPeriodForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const period = evaluationPeriods.find(p => p.id === editingPeriodId);
+            if (period) {
+                period.name = document.getElementById('editPeriodName').value;
+                period.startDate = document.getElementById('editPeriodStartDate').value;
+                period.endDate = document.getElementById('editPeriodEndDate').value;
+                saveData();
+                closeModal();
+                if (currentView === 'timeline') renderTimeline();
+                else if (selectedCohort) renderCohortDetail(selectedCohort);
+            }
+        });
+
+        // Edit Task Form
+        document.getElementById('editTaskForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const task = tasks.find(t => t.id === editingTaskId);
+            if (task) {
+                task.title = document.getElementById('editTaskTitle').value;
+                task.isMilestone = document.getElementById('editTaskIsMilestone').checked;
+                task.notes = document.getElementById('editTaskNotes').value;
+                
+                if (task.isMilestone) {
+                    task.date = document.getElementById('editTaskMilestoneDate').value;
+                    delete task.startDate;
+                    delete task.endDate;
+                } else {
+                    task.startDate = document.getElementById('editTaskStartDate').value;
+                    const endDate = document.getElementById('editTaskEndDate').value;
+                    task.endDate = endDate || task.startDate;
+                    delete task.date;
+                }
+                
+                saveData();
+                closeModal();
+                if (currentView === 'timeline') renderTimeline();
+                else if (selectedCohort) renderCohortDetail(selectedCohort);
+            }
+        });
+
+        // Edit task milestone checkbox listener
+        document.getElementById('editTaskIsMilestone').addEventListener('change', function() {
+            const editTaskDateSection = document.getElementById('editTaskDateSection');
+            const editMilestoneDateSection = document.getElementById('editMilestoneDateSection');
+            
+            if (this.checked) {
+                editTaskDateSection.style.display = 'none';
+                editMilestoneDateSection.style.display = 'block';
+                document.getElementById('editTaskMilestoneDate').required = true;
+                document.getElementById('editTaskStartDate').required = false;
+            } else {
+                editTaskDateSection.style.display = 'block';
+                editMilestoneDateSection.style.display = 'none';
+                document.getElementById('editTaskMilestoneDate').required = false;
+                document.getElementById('editTaskStartDate').required = true;
+            }
+        });
+
+        // Delete functions
+        function deleteUseCase(id) {
+            if (confirm('Delete this use case and all its tasks?')) {
+                useCases = useCases.filter(uc => uc.id !== id);
+                tasks = tasks.filter(t => t.useCaseId !== id);
+                
+                // Check if cohort is now empty
+                const useCase = useCases.find(uc => uc.id === id);
+                if (useCase) {
+                    const cohortUseCases = useCases.filter(uc => uc.cohort === useCase.cohort);
+                    if (cohortUseCases.length === 0) {
+                        // Remove cohort periods if no use cases left
+                        evaluationPeriods = evaluationPeriods.filter(p => p.cohort !== useCase.cohort);
+                        if (selectedCohort === useCase.cohort) {
+                            selectedCohort = null;
+                        }
+                    }
+                }
+                
+                saveData();
+                updateCohortFilter();
+                updateUseCaseSelects();
+                if (currentView === 'timeline') renderTimeline();
+                else renderGranularView();
+            }
+        }
+
+        function deletePeriod(id) {
+            if (confirm('Delete this evaluation period?')) {
+                evaluationPeriods = evaluationPeriods.filter(p => p.id !== id);
+                saveData();
+                if (currentView === 'timeline') renderTimeline();
+                else if (selectedCohort) renderCohortDetail(selectedCohort);
+            }
+        }
+
+        function deleteTask(id) {
+            if (confirm('Delete this task?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveData();
+                if (currentView === 'timeline') {
+                    renderTimeline();
+                } else if (selectedCohort) {
+                    renderCohortDetail(selectedCohort);
+                }
+            }
+            return false;
+        }
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        });
+
+        // Tooltip functions
+        let tooltipElement = null;
+
+        function showTooltip(event, text, type = 'period') {
+            hideTooltip();
+            
+            const parts = text.split('|||');
+            const title = parts[0];
+            const dates = parts[1];
+            const description = parts[2] || '';
+            
+            tooltipElement = document.createElement('div');
+            tooltipElement.className = 'timeline-tooltip';
+            
+            let html = `<strong>${title}</strong>`;
+            html += `<div class="date-range">${dates}</div>`;
+            if (description) {
+                html += `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">${description}</div>`;
+            }
+            
+            tooltipElement.innerHTML = html;
+            document.body.appendChild(tooltipElement);
+            
+            // Position tooltip
+            const x = event.clientX + 15;
+            const y = event.clientY + 15;
+            tooltipElement.style.left = x + 'px';
+            tooltipElement.style.top = y + 'px';
+        }
+
+        function hideTooltip() {
+            if (tooltipElement) {
+                tooltipElement.remove();
+                tooltipElement = null;
+            }
+        }
+
+        // Render upcoming tasks
+        function renderUpcomingTasks() {
+            const container = document.getElementById('upcomingList');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Get all upcoming tasks and milestones
+            let upcomingItems = [];
+            
+            tasks.forEach(task => {
+                const useCase = useCases.find(uc => uc.id === task.useCaseId);
+                if (!useCase) return;
+                
+                if (task.isMilestone) {
+                    const date = new Date(task.date);
+                    if (date >= today) {
+                        upcomingItems.push({
+                            type: 'milestone',
+                            title: task.title,
+                            date: date,
+                            dateStr: task.date,
+                            useCase: useCase.name,
+                            cohort: useCase.cohort,
+                            notes: task.notes,
+                            color: useCase.color
+                        });
+                    }
+                } else {
+                    const startDate = new Date(task.startDate);
+                    const endDate = new Date(task.endDate);
+                    if (endDate >= today) {
+                        upcomingItems.push({
+                            type: 'task',
+                            title: task.title,
+                            date: startDate,
+                            dateStr: task.startDate,
+                            endDateStr: task.endDate,
+                            isMultiDay: task.startDate !== task.endDate,
+                            useCase: useCase.name,
+                            cohort: useCase.cohort,
+                            notes: task.notes,
+                            color: useCase.color
+                        });
+                    }
+                }
+            });
+            
+            // Sort by date and take top 5
+            upcomingItems.sort((a, b) => a.date - b.date);
+            upcomingItems = upcomingItems.slice(0, 5);
+            
+            if (upcomingItems.length === 0) {
+                container.innerHTML = '<div style="color: #999; font-size: 14px; padding: 20px; text-align: center;">No upcoming tasks or milestones</div>';
+                return;
+            }
+            
+            let html = '';
+            upcomingItems.forEach(item => {
+                const dateStr = item.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                let dateDisplay = dateStr;
+                if (item.isMultiDay) {
+                    const endDate = new Date(item.endDateStr);
+                    dateDisplay += ' → ' + endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                }
+                
+                const daysUntil = Math.ceil((item.date - today) / (1000 * 60 * 60 * 24));
+                let urgency = '';
+                if (daysUntil === 0) urgency = 'Today';
+                else if (daysUntil === 1) urgency = 'Tomorrow';
+                else if (daysUntil <= 7) urgency = `In ${daysUntil} days`;
+                else urgency = dateDisplay.split(',')[0]; // Just show month and day
+                
+                html += `
+                    <div class="upcoming-item ${item.type}">
+                        <div class="upcoming-item-header">
+                            <div class="upcoming-item-title">${item.title}</div>
+                            <span class="upcoming-item-badge" style="background: ${item.type === 'milestone' ? '#e74c3c' : '#3498db'}; color: white;">
+                                ${item.type === 'milestone' ? 'MILESTONE' : 'TASK'}
+                            </span>
+                        </div>
+                        <div class="upcoming-item-meta">
+                            <span style="color: ${item.color}; font-weight: 500;">${item.cohort}</span> • ${item.useCase}
+                        </div>
+                        <div class="upcoming-item-date">
+                            ${urgency}${daysUntil > 7 ? ' (' + dateDisplay + ')' : ''}
+                        </div>
+                        ${item.notes ? `<div style="font-size: 12px; color: #666; margin-top: 6px; padding-top: 6px; border-top: 1px solid #f0f0f0;">${item.notes}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // File System Access API implementation
+        async function openLocalFile() {
+            // Check for browser support
+            if (!('showOpenFilePicker' in window)) {
+                alert('Direct file editing requires Chrome, Edge, or Opera Desktop.\n\nSwitching to standard import mode. "Save" will download a new file instead of overwriting.');
+                document.getElementById('importFile').click();
+                return;
+            }
+
+            try {
+                // Request a file handle
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'JSON Files',
+                        accept: { 'application/json': ['.json'] }
+                    }],
+                    multiple: false
+                });
+                
+                fileHandle = handle;
+                
+                // Get the file data
+                const file = await fileHandle.getFile();
+                const contents = await file.text();
+                
+                try {
+                    const data = JSON.parse(contents);
+                    processImportedData(data);
+                    
+                    // Update UI to show we are editing a file
+                    document.getElementById('saveFileItem').style.display = 'flex';
+                    document.title = `${file.name} - Use Case Timeline Manager`;
+                    alert(`Opened ${file.name} successfully!`);
+                    
+                } catch (e) {
+                    console.error('Parse error:', e);
+                    alert('Error parsing JSON file. Please ensure it is a valid timeline data file.');
+                }
+                
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('File open error:', err);
+                    alert(`Error opening file: ${err.message}\n\nIf you are on Chrome, ensure you are not using Incognito mode.`);
+                }
+            }
+        }
+
+        async function saveToLocalFile(quietMode = false) {
+            if (!fileHandle) {
+                // Fallback: If Ctrl+S is pressed but no file handle exists (or browser doesn't support it)
+                if (!quietMode && confirm('Direct save not available. Download as new file instead?')) {
+                    exportData();
+                }
+                return;
+            }
+
+            try {
+                // Create writable stream
+                const writable = await fileHandle.createWritable();
+                
+                // Prepare data
+                const data = {
+                    useCases: useCases,
+                    evaluationPeriods: evaluationPeriods,
+                    tasks: tasks,
+                    lastModified: new Date().toISOString()
+                };
+                
+                // Write data
+                await writable.write(JSON.stringify(data, null, 2));
+                await writable.close();
+                
+                // Show brief success feedback
+                const saveItem = document.getElementById('saveFileItem');
+                if (saveItem) {
+                    const originalText = 'Save Changes';
+                    saveItem.textContent = 'Saved! ✓';
+                    saveItem.style.color = '#27ae60';
+                    setTimeout(() => {
+                        saveItem.textContent = originalText;
+                        saveItem.style.color = '';
+                    }, 2000);
+                }
+                
+                if (!quietMode) {
+                    // Only alert if manual save failed (though here we are in success block)
+                    // or maybe just log? We don't want alerts in quiet mode.
+                }
+                
+            } catch (err) {
+                console.error('File save error:', err);
+                if (!quietMode) {
+                    alert('Error saving file.');
+                } else {
+                    // Update UI to show error state
+                    const saveItem = document.getElementById('saveFileItem');
+                    if (saveItem) {
+                        saveItem.textContent = 'Save Failed';
+                        saveItem.style.color = '#e74c3c';
+                    }
+                }
+            }
+        }
+
+        function processImportedData(data) {
+            // Validate and import data
+            let imported = false;
+            
+            if (data.useCases && Array.isArray(data.useCases)) {
+                useCases = data.useCases;
+                imported = true;
+            }
+            if (data.evaluationPeriods && Array.isArray(data.evaluationPeriods)) {
+                evaluationPeriods = data.evaluationPeriods;
+                imported = true;
+            }
+            if (data.tasks && Array.isArray(data.tasks)) {
+                tasks = data.tasks;
+                imported = true;
+            }
+            
+            if (!imported) {
+                throw new Error('No valid data found');
+            }
+            
+            saveData(); // Save to local storage as backup
+            updateCohortFilter();
+            updateUseCaseSelects();
+            
+            if (currentView === 'timeline') {
+                renderTimeline();
+            } else {
+                renderGranularView();
+            }
+        }
+
+        // Export data to JSON file
+        function exportData() {
+            const data = {
+                useCases: useCases,
+                evaluationPeriods: evaluationPeriods,
+                tasks: tasks,
+                exportDate: new Date().toISOString()
+            };
+            
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `timeline-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Sync to GitHub
+        async function syncToGitHub() {
+            if (!gitSettings) {
+                alert('Please configure Git settings first');
+                openModal('gitSettings');
+                return;
+            }
+
+            const syncBtn = document.getElementById('syncButton');
+            const originalText = syncBtn.textContent;
+            syncBtn.textContent = '⏳ Syncing...';
+            syncBtn.disabled = true;
+
+            try {
+                const data = {
+                    useCases: useCases,
+                    evaluationPeriods: evaluationPeriods,
+                    tasks: tasks,
+                    lastSync: new Date().toISOString()
+                };
+
+                const content = btoa(JSON.stringify(data, null, 2));
+                const url = `https://api.github.com/repos/${gitSettings.owner}/${gitSettings.repo}/contents/${gitSettings.path}`;
+
+                // First, try to get the file to get its SHA (needed for updates)
+                let sha = null;
+                try {
+                    const getResponse = await fetch(url, {
+                        headers: {
+                            'Authorization': `token ${gitSettings.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    if (getResponse.ok) {
+                        const fileData = await getResponse.json();
+                        sha = fileData.sha;
+                    }
+                } catch (e) {
+                    // File might not exist yet, that's ok
+                }
+
+                // Create or update the file
+                const body = {
+                    message: `Update timeline data - ${new Date().toISOString()}`,
+                    content: content,
+                    branch: gitSettings.branch
+                };
+                if (sha) {
+                    body.sha = sha; // Include SHA for updates
+                }
+
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${gitSettings.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`✅ Successfully synced to GitHub!\n\nCommit: ${result.commit.sha.substring(0, 7)}\nView at: ${result.content.html_url}`);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to sync to GitHub');
+                }
+            } catch (error) {
+                console.error('GitHub sync error:', error);
+                alert(`❌ Failed to sync to GitHub:\n${error.message}\n\nCheck your settings and token permissions.`);
+            } finally {
+                syncBtn.textContent = originalText;
+                syncBtn.disabled = false;
+            }
+        }
+
+        // Load from GitHub
+        async function loadFromGitHub() {
+            if (!gitSettings) {
+                alert('Please configure Git settings first');
+                return;
+            }
+
+            if (!confirm('This will replace your current data with data from GitHub. Continue?')) {
+                return;
+            }
+
+            try {
+                const url = `https://api.github.com/repos/${gitSettings.owner}/${gitSettings.repo}/contents/${gitSettings.path}`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${gitSettings.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (response.ok) {
+                    const fileData = await response.json();
+                    const content = atob(fileData.content);
+                    const data = JSON.parse(content);
+
+                    if (data.useCases) useCases = data.useCases;
+                    if (data.evaluationPeriods) evaluationPeriods = data.evaluationPeriods;
+                    if (data.tasks) tasks = data.tasks;
+
+                    saveData();
+                    updateCohortFilter();
+                    updateUseCaseSelects();
+
+                    if (currentView === 'timeline') {
+                        renderTimeline();
+                    } else {
+                        renderGranularView();
+                    }
+
+                    alert('✅ Data loaded from GitHub successfully!');
+                } else {
+                    throw new Error('File not found or access denied');
+                }
+            } catch (error) {
+                console.error('GitHub load error:', error);
+                alert(`❌ Failed to load from GitHub:\n${error.message}`);
+            }
+        }
+
+        // Import data from JSON file
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    processImportedData(data);
+                    
+                    alert(`Data imported successfully!\n\nImported:\n- ${useCases.length} use cases\n- ${evaluationPeriods.length} evaluation periods\n- ${tasks.length} tasks`);
+                } catch (error) {
+                    console.error('Import error:', error);
+                    alert(`Error importing data: ${error.message}\n\nPlease ensure the file is valid JSON format exported from this application.`);
+                }
+            };
+            
+            reader.onerror = () => {
+                alert('Error reading file. Please try again.');
+            };
+            
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
