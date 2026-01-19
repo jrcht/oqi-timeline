@@ -2784,6 +2784,24 @@
                 const releaseName = 'OQI Timeline Calendar Feed';
                 const baseUrl = `https://api.github.com/repos/${gitSettings.owner}/${gitSettings.repo}`;
 
+                // Step 0: Verify repository exists and token has access
+                const repoCheckResponse = await fetch(baseUrl, {
+                    headers: {
+                        'Authorization': `token ${gitSettings.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!repoCheckResponse.ok) {
+                    if (repoCheckResponse.status === 404) {
+                        throw new Error(`Repository not found: ${gitSettings.owner}/${gitSettings.repo}\n\n✓ Check your Git Settings:\n  - Repository Owner: ${gitSettings.owner}\n  - Repository Name: ${gitSettings.repo}\n\nMake sure these match your actual GitHub repository.`);
+                    } else if (repoCheckResponse.status === 401 || repoCheckResponse.status === 403) {
+                        throw new Error(`Authentication failed.\n\n✓ Check your GitHub token:\n  1. Token is valid and not expired\n  2. Token has "Contents: Read and write" permission\n  3. Token has access to: ${gitSettings.owner}/${gitSettings.repo}\n\nStatus: ${repoCheckResponse.status}`);
+                    } else {
+                        throw new Error(`Failed to access repository (HTTP ${repoCheckResponse.status})`);
+                    }
+                }
+
                 // Step 1: Check if release exists
                 let releaseId = null;
                 let existingAssetId = null;
@@ -2830,7 +2848,15 @@
 
                     if (!createReleaseResponse.ok) {
                         const error = await createReleaseResponse.json();
-                        throw new Error(`Failed to create release: ${error.message}`);
+                        let errorMsg = `Failed to create release: ${error.message || 'Unknown error'}`;
+
+                        if (createReleaseResponse.status === 422) {
+                            errorMsg += `\n\nPossible causes:\n- The tag "${releaseTag}" might already exist\n- Try deleting the tag and try again`;
+                        } else if (createReleaseResponse.status === 403) {
+                            errorMsg += `\n\n✓ Make sure your token has "Contents: Read and write" permission`;
+                        }
+
+                        throw new Error(errorMsg);
                     }
 
                     const releaseData = await createReleaseResponse.json();
@@ -2884,7 +2910,7 @@
 
             } catch (error) {
                 console.error('Calendar sync error:', error);
-                alert(`❌ Failed to sync calendar:\n${error.message}\n\nMake sure your GitHub token has 'repo' permissions.`);
+                alert(`❌ Failed to sync calendar:\n\n${error.message}`);
             } finally {
                 if (syncBtn) {
                     syncBtn.textContent = '📅 Sync Calendar to GitHub';
