@@ -2780,7 +2780,7 @@
             try {
                 // Generate iCal content
                 const icsContent = generateICSFile();
-                const icsPath = 'timeline.ics'; // Upload alongside timeline-data.json
+                const icsPath = 'docs/timeline.ics'; // Upload to docs folder for GitHub Pages
                 const baseUrl = `https://api.github.com/repos/${gitSettings.owner}/${gitSettings.repo}`;
 
                 // Step 1: Get existing file SHA if it exists (needed for updates)
@@ -2847,15 +2847,17 @@
                 }
 
                 const result = await uploadResponse.json();
-                const subscribeUrl = `https://raw.githubusercontent.com/${gitSettings.owner}/${gitSettings.repo}/${gitSettings.branch}/timeline.ics`;
+                // GitHub Pages URL format (repo can be private, Pages can be public)
+                const subscribeUrl = `https://${gitSettings.owner}.github.io/${gitSettings.repo}/timeline.ics`;
 
                 console.log('Calendar upload successful:', result);
-                console.log('File available at:', subscribeUrl);
+                console.log('File uploaded to:', 'docs/timeline.ics');
+                console.log('GitHub Pages URL:', subscribeUrl);
                 console.log('Uploaded to branch:', gitSettings.branch);
                 console.log('Commit SHA:', result.commit?.sha);
 
-                // Show success with subscription URL and branch info
-                alert(`✅ Calendar synced to GitHub!\n\nBranch: ${gitSettings.branch}\nCommit: ${result.commit?.sha?.substring(0, 7) || 'N/A'}\n\n📅 Calendar Subscription URL:\n${subscribeUrl}\n\nCopy this URL and add it to your calendar app.\n\nThe calendar includes:\n- ${tasks.length} tasks\n- ${evaluationPeriods.length * 2} evaluation period events (start/end)`);
+                // Show success with subscription URL and GitHub Pages setup reminder
+                alert(`✅ Calendar synced to GitHub!\n\nBranch: ${gitSettings.branch}\nCommit: ${result.commit?.sha?.substring(0, 7) || 'N/A'}\nUploaded to: docs/timeline.ics\n\n📅 Calendar Subscription URL:\n${subscribeUrl}\n\n⚠️ IMPORTANT: Enable GitHub Pages first:\n1. Go to repo Settings → Pages\n2. Source: Deploy from branch\n3. Branch: ${gitSettings.branch}\n4. Folder: /docs\n5. Save\n\nThen copy the URL above and add it to your calendar app.\n\nThe calendar includes:\n- ${tasks.length} tasks\n- ${evaluationPeriods.length * 2} evaluation period events (start/end)`);
 
                 // Store the subscription URL
                 localStorage.setItem('calendarSubscriptionUrl', subscribeUrl);
