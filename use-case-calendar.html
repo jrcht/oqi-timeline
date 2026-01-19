@@ -2762,7 +2762,7 @@
             return lines.join('\r\n');
         }
 
-        // Sync calendar to GitHub Release
+        // Sync calendar to GitHub (as regular file)
         async function syncCalendarToGitHub() {
             if (!gitSettings) {
                 alert('Please configure Git settings first');
@@ -2780,123 +2780,75 @@
             try {
                 // Generate iCal content
                 const icsContent = generateICSFile();
-                const releaseTag = 'calendar-latest';
-                const releaseName = 'OQI Timeline Calendar Feed';
+                const icsPath = 'timeline.ics'; // Upload alongside timeline-data.json
                 const baseUrl = `https://api.github.com/repos/${gitSettings.owner}/${gitSettings.repo}`;
 
-                // Step 0: Verify repository exists and token has access
-                const repoCheckResponse = await fetch(baseUrl, {
-                    headers: {
-                        'Authorization': `token ${gitSettings.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (!repoCheckResponse.ok) {
-                    if (repoCheckResponse.status === 404) {
-                        throw new Error(`Repository not found: ${gitSettings.owner}/${gitSettings.repo}\n\n✓ Check your Git Settings:\n  - Repository Owner: ${gitSettings.owner}\n  - Repository Name: ${gitSettings.repo}\n\nMake sure these match your actual GitHub repository.`);
-                    } else if (repoCheckResponse.status === 401 || repoCheckResponse.status === 403) {
-                        throw new Error(`Authentication failed.\n\n✓ Check your GitHub token:\n  1. Token is valid and not expired\n  2. Token has "Contents: Read and write" permission\n  3. Token has access to: ${gitSettings.owner}/${gitSettings.repo}\n\nStatus: ${repoCheckResponse.status}`);
-                    } else {
-                        throw new Error(`Failed to access repository (HTTP ${repoCheckResponse.status})`);
-                    }
-                }
-
-                // Step 1: Check if release exists
-                let releaseId = null;
-                let existingAssetId = null;
+                // Step 1: Get existing file SHA if it exists (needed for updates)
+                const fileUrl = `${baseUrl}/contents/${icsPath}`;
+                let sha = null;
 
                 try {
-                    const releaseResponse = await fetch(`${baseUrl}/releases/tags/${releaseTag}`, {
+                    const getResponse = await fetch(`${fileUrl}?ref=${gitSettings.branch}`, {
                         headers: {
                             'Authorization': `token ${gitSettings.token}`,
                             'Accept': 'application/vnd.github.v3+json'
                         }
                     });
-
-                    if (releaseResponse.ok) {
-                        const releaseData = await releaseResponse.json();
-                        releaseId = releaseData.id;
-
-                        // Check if timeline.ics asset exists
-                        const asset = releaseData.assets.find(a => a.name === 'timeline.ics');
-                        if (asset) {
-                            existingAssetId = asset.id;
-                        }
+                    if (getResponse.ok) {
+                        const fileData = await getResponse.json();
+                        sha = fileData.sha;
+                    } else if (getResponse.status === 404) {
+                        // File doesn't exist yet, that's ok
+                    } else {
+                        const error = await getResponse.json();
+                        throw new Error(`Failed to check existing file: ${error.message || getResponse.statusText}`);
                     }
                 } catch (e) {
-                    // Release doesn't exist, will create it
-                }
-
-                // Step 2: Create release if it doesn't exist
-                if (!releaseId) {
-                    const createReleaseResponse = await fetch(`${baseUrl}/releases`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `token ${gitSettings.token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            tag_name: releaseTag,
-                            name: releaseName,
-                            body: `📅 **OQI Timeline Calendar Feed**\n\nSubscribe to this calendar in your calendar app:\n\n\`\`\`\nhttps://github.com/${gitSettings.owner}/${gitSettings.repo}/releases/latest/download/timeline.ics\n\`\`\`\n\n**Compatible with:**\n- Google Calendar\n- Apple Calendar\n- Outlook\n- Thunderbird\n- Any iCal-compatible calendar app\n\n**Updates:** This feed is automatically updated when you sync your timeline.\n\nLast updated: ${new Date().toISOString()}`,
-                            draft: false,
-                            prerelease: false
-                        })
-                    });
-
-                    if (!createReleaseResponse.ok) {
-                        const error = await createReleaseResponse.json();
-                        let errorMsg = `Failed to create release: ${error.message || 'Unknown error'}`;
-
-                        if (createReleaseResponse.status === 422) {
-                            errorMsg += `\n\nPossible causes:\n- The tag "${releaseTag}" might already exist\n- Try deleting the tag and try again`;
-                        } else if (createReleaseResponse.status === 403) {
-                            errorMsg += `\n\n✓ Make sure your token has "Contents: Read and write" permission`;
-                        }
-
-                        throw new Error(errorMsg);
+                    if (e.message && e.message.includes('Failed to check')) {
+                        throw e;
                     }
-
-                    const releaseData = await createReleaseResponse.json();
-                    releaseId = releaseData.id;
+                    // Network error or file doesn't exist, continue
                 }
 
-                // Step 3: Delete existing asset if it exists
-                if (existingAssetId) {
-                    await fetch(`${baseUrl}/releases/assets/${existingAssetId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `token ${gitSettings.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    });
+                // Step 2: Upload/update the timeline.ics file
+                const content = btoa(unescape(encodeURIComponent(icsContent))); // Encode to base64, handling UTF-8
+
+                const body = {
+                    message: `Update calendar feed - ${new Date().toISOString()}`,
+                    content: content,
+                    branch: gitSettings.branch
+                };
+                if (sha) {
+                    body.sha = sha; // Include SHA for updates
                 }
 
-                // Step 4: Upload new timeline.ics asset
-                const uploadUrl = `https://uploads.github.com/repos/${gitSettings.owner}/${gitSettings.repo}/releases/${releaseId}/assets?name=timeline.ics`;
-
-                const uploadResponse = await fetch(uploadUrl, {
-                    method: 'POST',
+                const uploadResponse = await fetch(fileUrl, {
+                    method: 'PUT',
                     headers: {
                         'Authorization': `token ${gitSettings.token}`,
                         'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'text/calendar'
+                        'Content-Type': 'application/json'
                     },
-                    body: icsContent
+                    body: JSON.stringify(body)
                 });
 
                 if (!uploadResponse.ok) {
                     const error = await uploadResponse.json();
-                    throw new Error(`Failed to upload calendar: ${error.message}`);
+
+                    if (uploadResponse.status === 404) {
+                        throw new Error(`Repository not found: ${gitSettings.owner}/${gitSettings.repo}\n\n✓ Check your Git Settings are correct.`);
+                    } else if (uploadResponse.status === 401 || uploadResponse.status === 403) {
+                        throw new Error(`Authentication failed.\n\n✓ Check your GitHub token has "Contents: Read and write" permission.`);
+                    } else {
+                        throw new Error(`Failed to upload calendar: ${error.message || 'Unknown error'}`);
+                    }
                 }
 
-                const asset = await uploadResponse.json();
-                const subscribeUrl = `https://github.com/${gitSettings.owner}/${gitSettings.repo}/releases/latest/download/timeline.ics`;
+                const result = await uploadResponse.json();
+                const subscribeUrl = `https://raw.githubusercontent.com/${gitSettings.owner}/${gitSettings.repo}/${gitSettings.branch}/timeline.ics`;
 
                 // Show success with subscription URL
-                alert(`✅ Calendar synced to GitHub Release!\n\n📅 Calendar Subscription URL:\n${subscribeUrl}\n\nCopy this URL and add it to your calendar app.\n\nThe calendar includes:\n- ${tasks.length} tasks\n- ${evaluationPeriods.length * 2} evaluation period events (start/end)`);
+                alert(`✅ Calendar synced to GitHub!\n\n📅 Calendar Subscription URL:\n${subscribeUrl}\n\nCopy this URL and add it to your calendar app.\n\nThe calendar includes:\n- ${tasks.length} tasks\n- ${evaluationPeriods.length * 2} evaluation period events (start/end)`);
 
                 // Store the subscription URL
                 localStorage.setItem('calendarSubscriptionUrl', subscribeUrl);
