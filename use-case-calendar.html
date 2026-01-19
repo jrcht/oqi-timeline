@@ -1066,6 +1066,15 @@
                     <label>Branch</label>
                     <input type="text" id="githubBranch" value="main" required>
                 </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="encryptData" style="width: auto; margin: 0;">
+                        <span>Encrypt timeline data before syncing</span>
+                    </label>
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 8px; margin-left: 24px;">
+                        Uses your GitHub token as the encryption key. Data will be encrypted with AES-256-GCM before uploading.
+                    </small>
+                </div>
                 <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 13px;">
                     <strong>⚠️ Security Note:</strong> Your token is stored in browser localStorage. Keep it secure and don't share this browser profile.
                 </div>
@@ -1793,6 +1802,7 @@
                 document.getElementById('githubRepo').value = gitSettings.repo || '';
                 document.getElementById('githubPath').value = gitSettings.path || 'timeline-data.json';
                 document.getElementById('githubBranch').value = gitSettings.branch || 'main';
+                document.getElementById('encryptData').checked = gitSettings.encryptData || false;
             }
             
             document.getElementById(modalIds[type]).classList.add('active');
@@ -2042,7 +2052,8 @@
                 owner: document.getElementById('githubOwner').value,
                 repo: document.getElementById('githubRepo').value,
                 path: document.getElementById('githubPath').value,
-                branch: document.getElementById('githubBranch').value
+                branch: document.getElementById('githubBranch').value,
+                encryptData: document.getElementById('encryptData').checked
             };
             saveData();
             document.getElementById('syncMenuItem').style.display = 'flex';
@@ -2524,6 +2535,84 @@
             URL.revokeObjectURL(url);
         }
 
+        // Encryption/Decryption functions using Web Crypto API
+        async function deriveKey(password, salt) {
+            const encoder = new TextEncoder();
+            const passwordBuffer = encoder.encode(password);
+            const importedKey = await crypto.subtle.importKey(
+                'raw',
+                passwordBuffer,
+                'PBKDF2',
+                false,
+                ['deriveKey']
+            );
+
+            return crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                importedKey,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encryptData(jsonString, password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(jsonString);
+
+            // Generate random salt and IV
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+
+            // Derive key from password
+            const key = await deriveKey(password, salt);
+
+            // Encrypt data
+            const encrypted = await crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv: iv },
+                key,
+                data
+            );
+
+            // Combine salt + iv + encrypted data
+            const result = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+            result.set(salt, 0);
+            result.set(iv, salt.length);
+            result.set(new Uint8Array(encrypted), salt.length + iv.length);
+
+            // Convert to base64
+            return btoa(String.fromCharCode(...result));
+        }
+
+        async function decryptData(encryptedBase64, password) {
+            // Decode base64
+            const encryptedData = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
+
+            // Extract salt, IV, and encrypted data
+            const salt = encryptedData.slice(0, 16);
+            const iv = encryptedData.slice(16, 28);
+            const data = encryptedData.slice(28);
+
+            // Derive key from password
+            const key = await deriveKey(password, salt);
+
+            // Decrypt data
+            const decrypted = await crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: iv },
+                key,
+                data
+            );
+
+            // Convert to string
+            const decoder = new TextDecoder();
+            return decoder.decode(decrypted);
+        }
+
         // Sync to GitHub
         async function syncToGitHub() {
             if (!gitSettings) {
@@ -2545,7 +2634,18 @@
                     lastSync: new Date().toISOString()
                 };
 
-                const content = btoa(JSON.stringify(data, null, 2));
+                let jsonString = JSON.stringify(data, null, 2);
+                let content;
+
+                // Encrypt if encryption is enabled (uses GitHub token as key)
+                if (gitSettings.encryptData) {
+                    const encrypted = await encryptData(jsonString, gitSettings.token);
+                    // Wrap in an object to indicate this is encrypted
+                    content = btoa(JSON.stringify({ encrypted: true, data: encrypted }, null, 2));
+                } else {
+                    content = btoa(jsonString);
+                }
+
                 const url = `https://api.github.com/repos/${gitSettings.owner}/${gitSettings.repo}/contents/${gitSettings.path}`;
 
                 // First, try to get the file to get its SHA (needed for updates)
@@ -2587,7 +2687,8 @@
 
                 if (response.ok) {
                     const result = await response.json();
-                    alert(`✅ Successfully synced to GitHub!\n\nCommit: ${result.commit.sha.substring(0, 7)}\nView at: ${result.content.html_url}`);
+                    const encryptionStatus = gitSettings.encryptData ? '🔒 Encrypted (AES-256-GCM)' : '🔓 Not encrypted';
+                    alert(`✅ Successfully synced to GitHub!\n\nCommit: ${result.commit.sha.substring(0, 7)}\nSecurity: ${encryptionStatus}\nView at: ${result.content.html_url}`);
                 } else {
                     const error = await response.json();
                     throw new Error(error.message || 'Failed to sync to GitHub');
@@ -2624,7 +2725,17 @@
                 if (response.ok) {
                     const fileData = await response.json();
                     const content = atob(fileData.content);
-                    const data = JSON.parse(content);
+                    let data = JSON.parse(content);
+
+                    // Check if data is encrypted
+                    if (data.encrypted && data.data) {
+                        if (!gitSettings.encryptData) {
+                            throw new Error('Data is encrypted but encryption is disabled in settings. Enable encryption to decrypt.');
+                        }
+                        // Decrypt using GitHub token
+                        const decryptedJSON = await decryptData(data.data, gitSettings.token);
+                        data = JSON.parse(decryptedJSON);
+                    }
 
                     if (data.useCases) useCases = data.useCases;
                     if (data.evaluationPeriods) evaluationPeriods = data.evaluationPeriods;
@@ -2640,7 +2751,8 @@
                         renderGranularView();
                     }
 
-                    alert('✅ Data loaded from GitHub successfully!');
+                    const encryptionStatus = (data.encrypted) ? ' (decrypted)' : '';
+                    alert(`✅ Data loaded from GitHub successfully${encryptionStatus}!`);
                 } else {
                     throw new Error('File not found or access denied');
                 }
@@ -2780,7 +2892,7 @@
             try {
                 // Generate iCal content
                 const icsContent = generateICSFile();
-                const icsPath = 'timeline.ics'; // Upload alongside timeline-data.json
+                const icsPath = 'timeline.ics'; // Upload to root of repository
                 const baseUrl = `https://api.github.com/repos/${gitSettings.owner}/${gitSettings.repo}`;
 
                 // Step 1: Get existing file SHA if it exists (needed for updates)
@@ -2850,11 +2962,12 @@
                 const subscribeUrl = `https://raw.githubusercontent.com/${gitSettings.owner}/${gitSettings.repo}/${gitSettings.branch}/timeline.ics`;
 
                 console.log('Calendar upload successful:', result);
-                console.log('File available at:', subscribeUrl);
+                console.log('File uploaded to:', 'timeline.ics');
+                console.log('Subscription URL:', subscribeUrl);
                 console.log('Uploaded to branch:', gitSettings.branch);
                 console.log('Commit SHA:', result.commit?.sha);
 
-                // Show success with subscription URL and branch info
+                // Show success with subscription URL
                 alert(`✅ Calendar synced to GitHub!\n\nBranch: ${gitSettings.branch}\nCommit: ${result.commit?.sha?.substring(0, 7) || 'N/A'}\n\n📅 Calendar Subscription URL:\n${subscribeUrl}\n\nCopy this URL and add it to your calendar app.\n\nThe calendar includes:\n- ${tasks.length} tasks\n- ${evaluationPeriods.length * 2} evaluation period events (start/end)`);
 
                 // Store the subscription URL
