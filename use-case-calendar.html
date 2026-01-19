@@ -2621,10 +2621,12 @@
                 return;
             }
 
-            const syncBtn = document.getElementById('syncButton');
-            const originalText = syncBtn.textContent;
-            syncBtn.textContent = '⏳ Syncing...';
-            syncBtn.disabled = true;
+            const syncBtn = document.getElementById('syncMenuItem');
+            const originalText = syncBtn ? syncBtn.textContent : null;
+            if (syncBtn) {
+                syncBtn.textContent = '⏳ Syncing...';
+                syncBtn.style.pointerEvents = 'none';
+            }
 
             try {
                 const data = {
@@ -2697,8 +2699,10 @@
                 console.error('GitHub sync error:', error);
                 alert(`❌ Failed to sync to GitHub:\n${error.message}\n\nCheck your settings and token permissions.`);
             } finally {
-                syncBtn.textContent = originalText;
-                syncBtn.disabled = false;
+                if (syncBtn && originalText) {
+                    syncBtn.textContent = originalText;
+                    syncBtn.style.pointerEvents = 'auto';
+                }
             }
         }
 
