@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>Use Case Timeline Manager</title>
+    <title>OQI - Use Case Timeline Manager</title>
     <style>
         * {
             margin: 0;
@@ -2839,16 +2839,23 @@
                         throw new Error(`Repository not found: ${gitSettings.owner}/${gitSettings.repo}\n\n✓ Check your Git Settings are correct.`);
                     } else if (uploadResponse.status === 401 || uploadResponse.status === 403) {
                         throw new Error(`Authentication failed.\n\n✓ Check your GitHub token has "Contents: Read and write" permission.`);
+                    } else if (uploadResponse.status === 422) {
+                        throw new Error(`Upload validation failed: ${error.message || 'Unknown error'}\n\n✓ Check that branch "${gitSettings.branch}" exists in your repository.`);
                     } else {
-                        throw new Error(`Failed to upload calendar: ${error.message || 'Unknown error'}`);
+                        throw new Error(`Failed to upload calendar (HTTP ${uploadResponse.status}): ${error.message || 'Unknown error'}`);
                     }
                 }
 
                 const result = await uploadResponse.json();
                 const subscribeUrl = `https://raw.githubusercontent.com/${gitSettings.owner}/${gitSettings.repo}/${gitSettings.branch}/timeline.ics`;
 
-                // Show success with subscription URL
-                alert(`✅ Calendar synced to GitHub!\n\n📅 Calendar Subscription URL:\n${subscribeUrl}\n\nCopy this URL and add it to your calendar app.\n\nThe calendar includes:\n- ${tasks.length} tasks\n- ${evaluationPeriods.length * 2} evaluation period events (start/end)`);
+                console.log('Calendar upload successful:', result);
+                console.log('File available at:', subscribeUrl);
+                console.log('Uploaded to branch:', gitSettings.branch);
+                console.log('Commit SHA:', result.commit?.sha);
+
+                // Show success with subscription URL and branch info
+                alert(`✅ Calendar synced to GitHub!\n\nBranch: ${gitSettings.branch}\nCommit: ${result.commit?.sha?.substring(0, 7) || 'N/A'}\n\n📅 Calendar Subscription URL:\n${subscribeUrl}\n\nCopy this URL and add it to your calendar app.\n\nThe calendar includes:\n- ${tasks.length} tasks\n- ${evaluationPeriods.length * 2} evaluation period events (start/end)`);
 
                 // Store the subscription URL
                 localStorage.setItem('calendarSubscriptionUrl', subscribeUrl);
