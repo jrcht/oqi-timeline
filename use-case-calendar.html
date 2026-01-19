@@ -811,7 +811,10 @@
                         </div>
                         <div class="settings-menu-separator"></div>
                         <div class="settings-menu-item" onclick="closeSettingsMenu(); exportData();">
-                            Export as New File
+                            Export Data File
+                        </div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); exportBackup();">
+                            Export Dated Backup
                         </div>
                         <div class="settings-menu-item" onclick="closeSettingsMenu(); document.getElementById('importFile').click();">
                             Import Data
@@ -825,6 +828,9 @@
                         </div>
                         <div class="settings-menu-item" onclick="closeSettingsMenu(); loadFromGitHub();" id="pullMenuItem" style="display: none;">
                             Pull from GitHub
+                        </div>
+                        <div class="settings-menu-item" onclick="closeSettingsMenu(); syncCalendarToGitHub();" id="syncCalendarMenuItem" style="display: none;">
+                            📅 Sync Calendar to GitHub
                         </div>
                     </div>
                 </div>
@@ -871,6 +877,27 @@
                 <div class="upcoming-section">
                     <h3 class="upcoming-title">Next 5 Tasks & Milestones</h3>
                     <div class="upcoming-list" id="upcomingList"></div>
+                </div>
+
+                <!-- Calendar Subscription Section -->
+                <div class="calendar-info-section" id="calendarInfoSection" style="display: none;">
+                    <h3 class="upcoming-title">📅 Calendar Subscription</h3>
+                    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 16px; margin-top: 12px;">
+                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #666;">
+                            Subscribe to this URL in your calendar app to receive automatic updates:
+                        </p>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="calendarUrl" readonly
+                                   style="flex: 1; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-family: monospace; font-size: 13px; background: white;">
+                            <button onclick="copyCalendarUrl()" id="copyCalendarBtn"
+                                    style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; white-space: nowrap;">
+                                Copy URL
+                            </button>
+                        </div>
+                        <p style="margin: 12px 0 0 0; font-size: 12px; color: #999;">
+                            Compatible with Google Calendar, Apple Calendar, Outlook, and other iCal-compatible apps.
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -1181,6 +1208,17 @@
                 gitSettings = JSON.parse(savedGitSettings);
                 document.getElementById('syncMenuItem').style.display = 'flex';
                 document.getElementById('pullMenuItem').style.display = 'flex';
+                document.getElementById('syncCalendarMenuItem').style.display = 'flex';
+            }
+
+            // Load and display calendar URL if it exists
+            const savedCalendarUrl = localStorage.getItem('calendarSubscriptionUrl');
+            if (savedCalendarUrl) {
+                const calendarInfo = document.getElementById('calendarInfoSection');
+                if (calendarInfo) {
+                    calendarInfo.style.display = 'block';
+                    document.getElementById('calendarUrl').value = savedCalendarUrl;
+                }
             }
         }
 
@@ -2009,8 +2047,9 @@
             saveData();
             document.getElementById('syncMenuItem').style.display = 'flex';
             document.getElementById('pullMenuItem').style.display = 'flex';
+            document.getElementById('syncCalendarMenuItem').style.display = 'flex';
             closeModal();
-            alert('GitHub settings saved! You can now sync your data.');
+            alert('GitHub settings saved! You can now sync your data and calendar.');
         });
 
         // Edit Cohort Form
@@ -2441,7 +2480,7 @@
             }
         }
 
-        // Export data to JSON file
+        // Export data to JSON file (fixed filename)
         function exportData() {
             const data = {
                 useCases: useCases,
@@ -2449,14 +2488,36 @@
                 tasks: tasks,
                 exportDate: new Date().toISOString()
             };
-            
+
             const json = JSON.stringify(data, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement('a');
             a.href = url;
-            a.download = `timeline-data-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = 'timeline-data.json'; // Fixed filename
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Export dated backup
+        function exportBackup() {
+            const data = {
+                useCases: useCases,
+                evaluationPeriods: evaluationPeriods,
+                tasks: tasks,
+                exportDate: new Date().toISOString()
+            };
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `timeline-data-backup-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -2587,6 +2648,289 @@
                 console.error('GitHub load error:', error);
                 alert(`❌ Failed to load from GitHub:\n${error.message}`);
             }
+        }
+
+        // Generate iCal (.ics) file for calendar feed
+        function generateICSFile() {
+            const lines = [];
+
+            // iCal header
+            lines.push('BEGIN:VCALENDAR');
+            lines.push('VERSION:2.0');
+            lines.push('PRODID:-//OQI Timeline//EN');
+            lines.push('CALSCALE:GREGORIAN');
+            lines.push('METHOD:PUBLISH');
+            lines.push('X-WR-CALNAME:OQI Use Case Timeline');
+            lines.push('X-WR-TIMEZONE:UTC');
+            lines.push('X-WR-CALDESC:Automatically generated calendar feed for OQI use case timeline');
+
+            // Helper function to format date for iCal (YYYYMMDD)
+            const formatDate = (dateStr) => {
+                return dateStr.replace(/-/g, '');
+            };
+
+            // Helper function to escape text for iCal
+            const escapeText = (text) => {
+                if (!text) return '';
+                return text.replace(/\\/g, '\\\\')
+                          .replace(/;/g, '\\;')
+                          .replace(/,/g, '\\,')
+                          .replace(/\n/g, '\\n');
+            };
+
+            // Get use case name by ID
+            const getUseCaseName = (useCaseId) => {
+                const uc = useCases.find(u => u.id === useCaseId);
+                return uc ? uc.name : 'Unknown';
+            };
+
+            // Add evaluation periods (2 events each: start and end)
+            evaluationPeriods.forEach(period => {
+                const uid = `eval-start-${period.id}@oqi-timeline`;
+                const uidEnd = `eval-end-${period.id}@oqi-timeline`;
+                const startDate = formatDate(period.startDate);
+                const endDate = formatDate(period.endDate);
+                const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+                // START event
+                lines.push('BEGIN:VEVENT');
+                lines.push(`UID:${uid}`);
+                lines.push(`DTSTAMP:${now}`);
+                lines.push(`DTSTART;VALUE=DATE:${startDate}`);
+                lines.push(`DTEND;VALUE=DATE:${startDate}`); // All-day event
+                lines.push(`SUMMARY:${escapeText(period.cohort)} - ${escapeText(period.name)} - START`);
+                lines.push(`DESCRIPTION:Evaluation period starts for cohort ${escapeText(period.cohort)}`);
+                lines.push(`STATUS:CONFIRMED`);
+                lines.push(`TRANSP:TRANSPARENT`);
+                lines.push('END:VEVENT');
+
+                // END event
+                lines.push('BEGIN:VEVENT');
+                lines.push(`UID:${uidEnd}`);
+                lines.push(`DTSTAMP:${now}`);
+                lines.push(`DTSTART;VALUE=DATE:${endDate}`);
+                lines.push(`DTEND;VALUE=DATE:${endDate}`); // All-day event
+                lines.push(`SUMMARY:${escapeText(period.cohort)} - ${escapeText(period.name)} - END`);
+                lines.push(`DESCRIPTION:Evaluation period ends for cohort ${escapeText(period.cohort)}`);
+                lines.push(`STATUS:CONFIRMED`);
+                lines.push(`TRANSP:TRANSPARENT`);
+                lines.push('END:VEVENT');
+            });
+
+            // Add tasks
+            tasks.forEach(task => {
+                const uid = `task-${task.id}@oqi-timeline`;
+                const useCaseName = getUseCaseName(task.useCaseId);
+                const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+                lines.push('BEGIN:VEVENT');
+                lines.push(`UID:${uid}`);
+                lines.push(`DTSTAMP:${now}`);
+
+                if (task.isMilestone) {
+                    // Milestone: single-day event
+                    const date = formatDate(task.date);
+                    lines.push(`DTSTART;VALUE=DATE:${date}`);
+                    lines.push(`DTEND;VALUE=DATE:${date}`);
+                } else {
+                    // Date-range task
+                    const startDate = formatDate(task.startDate || task.date);
+                    const endDate = formatDate(task.endDate || task.startDate || task.date);
+                    lines.push(`DTSTART;VALUE=DATE:${startDate}`);
+                    lines.push(`DTEND;VALUE=DATE:${endDate}`);
+                }
+
+                lines.push(`SUMMARY:[${escapeText(useCaseName)}] ${escapeText(task.title)}`);
+
+                let description = `Use Case: ${escapeText(useCaseName)}`;
+                if (task.notes) {
+                    description += `\\n\\nNotes: ${escapeText(task.notes)}`;
+                }
+                if (task.isMilestone) {
+                    description += `\\n\\nType: Milestone`;
+                }
+                lines.push(`DESCRIPTION:${description}`);
+
+                lines.push(`STATUS:CONFIRMED`);
+                lines.push(`TRANSP:TRANSPARENT`);
+                lines.push('END:VEVENT');
+            });
+
+            // iCal footer
+            lines.push('END:VCALENDAR');
+
+            return lines.join('\r\n');
+        }
+
+        // Sync calendar to GitHub Release
+        async function syncCalendarToGitHub() {
+            if (!gitSettings) {
+                alert('Please configure Git settings first');
+                openModal('gitSettings');
+                return;
+            }
+
+            const syncBtn = document.getElementById('syncCalendarButton');
+            if (syncBtn) {
+                const originalText = syncBtn.textContent;
+                syncBtn.textContent = '⏳ Syncing Calendar...';
+                syncBtn.disabled = true;
+            }
+
+            try {
+                // Generate iCal content
+                const icsContent = generateICSFile();
+                const releaseTag = 'calendar-latest';
+                const releaseName = 'OQI Timeline Calendar Feed';
+                const baseUrl = `https://api.github.com/repos/${gitSettings.owner}/${gitSettings.repo}`;
+
+                // Step 0: Verify repository exists and token has access
+                const repoCheckResponse = await fetch(baseUrl, {
+                    headers: {
+                        'Authorization': `token ${gitSettings.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!repoCheckResponse.ok) {
+                    if (repoCheckResponse.status === 404) {
+                        throw new Error(`Repository not found: ${gitSettings.owner}/${gitSettings.repo}\n\n✓ Check your Git Settings:\n  - Repository Owner: ${gitSettings.owner}\n  - Repository Name: ${gitSettings.repo}\n\nMake sure these match your actual GitHub repository.`);
+                    } else if (repoCheckResponse.status === 401 || repoCheckResponse.status === 403) {
+                        throw new Error(`Authentication failed.\n\n✓ Check your GitHub token:\n  1. Token is valid and not expired\n  2. Token has "Contents: Read and write" permission\n  3. Token has access to: ${gitSettings.owner}/${gitSettings.repo}\n\nStatus: ${repoCheckResponse.status}`);
+                    } else {
+                        throw new Error(`Failed to access repository (HTTP ${repoCheckResponse.status})`);
+                    }
+                }
+
+                // Step 1: Check if release exists
+                let releaseId = null;
+                let existingAssetId = null;
+
+                try {
+                    const releaseResponse = await fetch(`${baseUrl}/releases/tags/${releaseTag}`, {
+                        headers: {
+                            'Authorization': `token ${gitSettings.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    if (releaseResponse.ok) {
+                        const releaseData = await releaseResponse.json();
+                        releaseId = releaseData.id;
+
+                        // Check if timeline.ics asset exists
+                        const asset = releaseData.assets.find(a => a.name === 'timeline.ics');
+                        if (asset) {
+                            existingAssetId = asset.id;
+                        }
+                    }
+                } catch (e) {
+                    // Release doesn't exist, will create it
+                }
+
+                // Step 2: Create release if it doesn't exist
+                if (!releaseId) {
+                    const createReleaseResponse = await fetch(`${baseUrl}/releases`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `token ${gitSettings.token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            tag_name: releaseTag,
+                            name: releaseName,
+                            body: `📅 **OQI Timeline Calendar Feed**\n\nSubscribe to this calendar in your calendar app:\n\n\`\`\`\nhttps://github.com/${gitSettings.owner}/${gitSettings.repo}/releases/latest/download/timeline.ics\n\`\`\`\n\n**Compatible with:**\n- Google Calendar\n- Apple Calendar\n- Outlook\n- Thunderbird\n- Any iCal-compatible calendar app\n\n**Updates:** This feed is automatically updated when you sync your timeline.\n\nLast updated: ${new Date().toISOString()}`,
+                            draft: false,
+                            prerelease: false
+                        })
+                    });
+
+                    if (!createReleaseResponse.ok) {
+                        const error = await createReleaseResponse.json();
+                        let errorMsg = `Failed to create release: ${error.message || 'Unknown error'}`;
+
+                        if (createReleaseResponse.status === 422) {
+                            errorMsg += `\n\nPossible causes:\n- The tag "${releaseTag}" might already exist\n- Try deleting the tag and try again`;
+                        } else if (createReleaseResponse.status === 403) {
+                            errorMsg += `\n\n✓ Make sure your token has "Contents: Read and write" permission`;
+                        }
+
+                        throw new Error(errorMsg);
+                    }
+
+                    const releaseData = await createReleaseResponse.json();
+                    releaseId = releaseData.id;
+                }
+
+                // Step 3: Delete existing asset if it exists
+                if (existingAssetId) {
+                    await fetch(`${baseUrl}/releases/assets/${existingAssetId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `token ${gitSettings.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                }
+
+                // Step 4: Upload new timeline.ics asset
+                const uploadUrl = `https://uploads.github.com/repos/${gitSettings.owner}/${gitSettings.repo}/releases/${releaseId}/assets?name=timeline.ics`;
+
+                const uploadResponse = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${gitSettings.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'text/calendar'
+                    },
+                    body: icsContent
+                });
+
+                if (!uploadResponse.ok) {
+                    const error = await uploadResponse.json();
+                    throw new Error(`Failed to upload calendar: ${error.message}`);
+                }
+
+                const asset = await uploadResponse.json();
+                const subscribeUrl = `https://github.com/${gitSettings.owner}/${gitSettings.repo}/releases/latest/download/timeline.ics`;
+
+                // Show success with subscription URL
+                alert(`✅ Calendar synced to GitHub Release!\n\n📅 Calendar Subscription URL:\n${subscribeUrl}\n\nCopy this URL and add it to your calendar app.\n\nThe calendar includes:\n- ${tasks.length} tasks\n- ${evaluationPeriods.length * 2} evaluation period events (start/end)`);
+
+                // Store the subscription URL
+                localStorage.setItem('calendarSubscriptionUrl', subscribeUrl);
+
+                // Show calendar info section
+                const calendarInfo = document.getElementById('calendarInfoSection');
+                if (calendarInfo) {
+                    calendarInfo.style.display = 'block';
+                    document.getElementById('calendarUrl').value = subscribeUrl;
+                }
+
+            } catch (error) {
+                console.error('Calendar sync error:', error);
+                alert(`❌ Failed to sync calendar:\n\n${error.message}`);
+            } finally {
+                if (syncBtn) {
+                    syncBtn.textContent = '📅 Sync Calendar to GitHub';
+                    syncBtn.disabled = false;
+                }
+            }
+        }
+
+        // Copy calendar URL to clipboard
+        function copyCalendarUrl() {
+            const urlInput = document.getElementById('calendarUrl');
+            urlInput.select();
+            document.execCommand('copy');
+
+            const copyBtn = document.getElementById('copyCalendarBtn');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = '✓ Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
         }
 
         // Import data from JSON file
